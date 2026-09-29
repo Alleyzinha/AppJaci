@@ -1,0 +1,9 @@
+node_modules
+server/node_modules
+.expo
+dist
+server/dist
+package-lock.json
+server/package-lock.json
+.validacao
+server/prisma

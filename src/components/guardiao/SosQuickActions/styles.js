@@ -1,0 +1,61 @@
+import { StyleSheet } from 'react-native';
+import { radius, spacing, typography } from '@/styles/tokens';
+
+export const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    marginTop: spacing.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  header: {
+    minHeight: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  headingCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
+  heading: { fontSize: typography.md, fontWeight: '700', lineHeight: 22 },
+  headingDescription: { fontSize: typography.xs, lineHeight: 18 },
+  illustration: {
+    width: 60,
+    height: 60,
+    borderRadius: radius.full,
+    backgroundColor: '#FFFFFF',
+  },
+  actionList: { width: '100%' },
+  action: {
+    minHeight: 70,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.md,
+  },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionCopy: { flex: 1, minWidth: 0, gap: 2 },
+  actionTitle: { fontSize: typography.sm, fontWeight: '700', lineHeight: 19 },
+  actionSubtitle: { fontSize: typography.xs, lineHeight: 17 },
+  guidance: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: radius.lg,
+  },
+  guidanceCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
+  guidanceTitle: { fontSize: typography.xs, fontWeight: '700', lineHeight: 17 },
+  guidanceDescription: { fontSize: typography.xs, lineHeight: 17 },
+});

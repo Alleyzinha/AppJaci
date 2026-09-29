@@ -1,0 +1,67 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env*.local
+server/.env
+server/prisma/*.db
+server/prisma/*.db-journal
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# Banco e relatórios locais de validação
+.validacao/
+*.sql.bak
+
+# DevTools / validação
+.mapa-validacao/
+.mapa-check.cjs
+.responsive-web-check/
+scratch/
+.expo-shared/
+
+# Logs
+*.log
+
+# AI tooling configs (not part of the app)
+.claude/
+.kombai/
+
+# Server dependencies
+server/node_modules/
+server/dist/

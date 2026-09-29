@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Jaci · Administração</title>
+    <link rel="stylesheet" href="/admin/painel.css" />
+    <script src="/admin/painel.js" defer></script>
+  </head>
+  <body>
+    <header class="cabecalho">
+      <a class="marca" href="/admin" aria-label="Jaci, início do painel"
+        ><span class="simbolo">J</span> Jaci <span class="etiqueta">ADMINISTRAÇÃO</span></a
+      >
+      <div id="sessao" hidden>
+        <span id="nome-administrador"></span
+        ><button id="sair" class="botao secundario" type="button">Sair</button>
+      </div>
+    </header>
+    <main>
+      <section id="entrada" class="entrada">
+        <div class="apresentacao">
+          <p class="sobretitulo">SUA REDE, BEM ORGANIZADA</p>
+          <h1>Conheça quem<br />faz parte da Jaci.</h1>
+          <p>Consulte os cadastros em um só lugar, com busca, filtros e informações atualizadas.</p>
+          <div class="nota">
+            Área exclusiva para pessoas autorizadas a administrar os cadastros.
+          </div>
+        </div>
+        <form id="formulario-entrada" class="cartao formulario">
+          <h2>Acessar o painel</h2>
+          <p class="texto-suave">Use sua conta Jaci autorizada para administração.</p>
+          <label for="email">E-mail</label
+          ><input
+            id="email"
+            type="email"
+            autocomplete="username"
+            maxlength="100"
+            required
+            placeholder="voce@exemplo.com"
+          />
+          <label for="senha">Senha</label
+          ><input
+            id="senha"
+            type="password"
+            autocomplete="current-password"
+            maxlength="100"
+            required
+          />
+          <p id="erro-entrada" role="alert" class="mensagem erro"></p>
+          <button id="entrar" class="botao" type="submit">Entrar no painel</button>
+          <p class="ajuda">
+            Sua conta precisa estar cadastrada e com e-mail confirmado no aplicativo.
+          </p>
+        </form>
+      </section>
+      <section id="painel" hidden>
+        <div class="titulo-pagina">
+          <div>
+            <p class="sobretitulo">VISÃO GERAL</p>
+            <h1>Pessoas cadastradas</h1>
+            <p class="texto-suave">Encontre e consulte os dados de cadastro da sua rede.</p>
+          </div>
+          <button id="atualizar" class="botao secundario" type="button">Atualizar dados</button>
+        </div>
+        <div class="indicadores" aria-label="Resumo dos cadastros">
+          <article class="cartao indicador">
+            <span>Total de pessoas</span><strong id="total">—</strong>
+          </article>
+          <article class="cartao indicador">
+            <span>Protegidas</span><strong id="protegidas">—</strong>
+          </article>
+          <article class="cartao indicador">
+            <span>Guardiões</span><strong id="guardioes">—</strong>
+          </article>
+          <article class="cartao indicador">
+            <span>E-mail pendente</span><strong id="pendentes">—</strong>
+          </article>
+        </div>
+        <section class="cartao cadastros" aria-labelledby="titulo-lista">
+          <div class="cabecalho-lista">
+            <h2 id="titulo-lista">Cadastros da rede</h2>
+            <span id="quantidade" class="texto-suave" aria-live="polite"></span>
+          </div>
+          <form id="filtros" class="filtros">
+            <div class="campo busca">
+              <label for="busca">Buscar pessoa</label
+              ><input
+                id="busca"
+                type="search"
+                maxlength="100"
+                placeholder="Nome, e-mail ou telefone"
+              />
+            </div>
+            <div class="campo">
+              <label for="perfil">Perfil</label
+              ><select id="perfil">
+                <option value="todos">Todos os perfis</option>
+                <option value="protegida">Protegida</option>
+                <option value="guardiao">Guardião</option>
+                <option value="administrador">Administrador</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="confirmacao">E-mail</label
+              ><select id="confirmacao">
+                <option value="todos">Todos os status</option>
+                <option value="confirmado">Confirmado</option>
+                <option value="pendente">Pendente</option>
+              </select>
+            </div>
+            <button class="botao" type="submit">Buscar</button
+            ><button id="limpar" class="botao secundario" type="button">Limpar</button>
+          </form>
+          <p id="aviso" role="status" class="mensagem"></p>
+          <div class="tabela-rolagem">
+            <table>
+              <caption class="somente-leitor">
+                Dados das pessoas cadastradas
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Pessoa</th>
+                  <th scope="col">Contato</th>
+                  <th scope="col">Perfil</th>
+                  <th scope="col">E-mail</th>
+                  <th scope="col">Cadastro</th>
+                </tr>
+              </thead>
+              <tbody id="usuarios"></tbody>
+            </table>
+          </div>
+          <nav class="paginacao" aria-label="Paginação">
+            <span id="pagina-atual">Página 1</span>
+            <div>
+              <button id="anterior" type="button" class="botao secundario">Anterior</button
+              ><button id="proxima" type="button" class="botao secundario">Próxima</button>
+            </div>
+          </nav>
+        </section>
+        <p class="rodape">
+          Consulta de cadastros · Senhas, PINs, códigos, diário e localização não são exibidos neste
+          painel.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

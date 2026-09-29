@@ -1,0 +1,46 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  busca: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingLeft: 16,
+    paddingRight: 8,
+    minHeight: 56,
+    borderWidth: 1,
+    borderRadius: 18,
+  },
+  campo: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 16 },
+  limpar: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  cabecalhoLista: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    gap: 12,
+  },
+  secao: { fontSize: 18, fontWeight: '600' },
+  contagem: { fontSize: 12 },
+  cartao: { padding: 22, borderRadius: 24, borderWidth: 1, gap: 12 },
+  topoCartao: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  icone: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoria: { fontSize: 12, fontWeight: '600' },
+  titulo: { fontSize: 20, lineHeight: 27, fontWeight: '600', letterSpacing: -0.3 },
+  descricao: { fontSize: 14, lineHeight: 22 },
+  rodape: {
+    borderTopWidth: 1,
+    paddingTop: 14,
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  disponibilidade: { fontSize: 11, lineHeight: 17, flex: 1 },
+});

@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "AppJaci",
+    "slug": "AppJaci",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-router",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita que a Jaci acesse sua posição quando você decidir compartilhá-la com seus guardiões.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "locationAlwaysAndWhenInUsePermission": "Permita que a Jaci compartilhe sua localização com seus guardiões, mesmo com a tela bloqueada, enquanto você mantiver o compartilhamento ativo."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "A Jaci usa as fotos e vídeos escolhidos por você para anexá-los aos registros locais do Diário.",
+          "cameraPermission": "A Jaci usa a câmera quando você escolhe registrar uma evidência no Diário.",
+          "microphonePermission": "A Jaci usa o microfone apenas quando você escolhe gravar áudio para um registro local do Diário."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "A Jaci usa o microfone apenas quando você escolhe gravar áudio para um registro local do Diário."
+        }
+      ],
+      "expo-video",
+      "expo-asset"
+    ]
+  }
+}

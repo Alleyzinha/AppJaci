@@ -1,0 +1,34 @@
+{
+  "name": "appjaci-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "start:prod": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "db:setup": "tsx src/banco/preparar.ts",
+    "test": "tsx --test testes/*.test.ts",
+    "test:integration": "tsx --test testes/integracao/*.test.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.0",
+    "@fastify/helmet": "^13.0.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.2",
+    "fastify": "^5.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.24.4",
+    "nodemailer": "^10.0.11",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.5.2",
+    "@types/nodemailer": "^8.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  }
+}
