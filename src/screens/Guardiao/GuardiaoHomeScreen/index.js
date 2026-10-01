@@ -68,6 +68,9 @@ const GuardiaoHomeScreen = () => {
 
   const handleActionPress = (action) => {
     switch (action) {
+      case 'chat':
+        router.push('/guardiao/chat');
+        break;
       case 'configuracao':
         router.push('/guardiao/configuracoes');
         break;

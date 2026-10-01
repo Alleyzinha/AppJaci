@@ -2,7 +2,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -27,6 +26,7 @@ import AppButton from '@/components/ui/AppButton';
 import { useRegister } from '@/features/auth/hooks/useRegister';
 
 import { registerSchema } from '@/features/auth/schemas/register.schema';
+import { mensagemErroApi } from '@/services/api/api';
 
 import { styles } from './styles';
 
@@ -47,6 +47,7 @@ export default function CadastroScreen() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+  const [erroCadastro, setErroCadastro] = useState('');
 
   const {
     control,
@@ -75,6 +76,7 @@ export default function CadastroScreen() {
   const senhasCoincidem = confirmPassword.length > 0 && password === confirmPassword;
 
   const handleCadastrar = async (data) => {
+    setErroCadastro('');
     try {
       await registerMutation.mutateAsync({
         name: data.name,
@@ -99,7 +101,7 @@ export default function CadastroScreen() {
         },
       });
     } catch (error) {
-      Alert.alert('Erro', error?.response?.data?.error ?? 'Não foi possível realizar o cadastro.');
+      setErroCadastro(mensagemErroApi(error, 'Não foi possível realizar o cadastro.'));
     }
   };
 
@@ -345,6 +347,11 @@ export default function CadastroScreen() {
               {/* BOTÃO CADASTRAR */}
 
               <View style={styles.footerGroup}>
+                {erroCadastro ? (
+                  <Text accessibilityRole="alert" style={styles.invalidText}>
+                    {erroCadastro}
+                  </Text>
+                ) : null}
                 <View style={styles.buttonContainer}>
                   <AppButton
                     title="Continuar"

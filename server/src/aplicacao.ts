@@ -10,6 +10,8 @@ import { rotasAutenticacao } from './rotas/autenticacao.js';
 import { rotasGuardioes } from './rotas/guardioes.js';
 import { rotasProtecao } from './rotas/protecao.js';
 import { rotasAdministracao } from './rotas/administracao.js';
+import { rotasChat } from './rotas/chat.js';
+import { rotasAssistente } from './rotas/assistente.js';
 
 export async function criarAplicacao(logger = true) {
   z.config(z.locales.ptBR());
@@ -20,7 +22,10 @@ export async function criarAplicacao(logger = true) {
   const origens = (process.env.CORS_ORIGIN || 'http://localhost:8081,http://localhost:8082')
     .split(',')
     .map((valor) => valor.trim());
-  await app.register(cors, { origin: origens });
+  await app.register(cors, {
+    origin: origens,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
   await app.register(helmet);
   await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
   app.get('/health', async () => {
@@ -49,5 +54,7 @@ export async function criarAplicacao(logger = true) {
   await rotasGuardioes(app);
   await rotasProtecao(app);
   await rotasAdministracao(app);
+  await rotasChat(app);
+  await rotasAssistente(app);
   return app;
 }

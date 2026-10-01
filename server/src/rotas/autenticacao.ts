@@ -1,7 +1,7 @@
 import { randomInt } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
+import { enviarEmail } from '../email.js';
 import { z } from 'zod';
 import { consultar, executar, transacao } from '../banco/conexao.js';
 import {
@@ -47,13 +47,7 @@ export async function rotasAutenticacao(app: FastifyInstance) {
       );
       return;
     }
-    const transporte = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_PORT === '465',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
-    });
-    await transporte.sendMail({
+    await enviarEmail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: usuario.email,
       subject:

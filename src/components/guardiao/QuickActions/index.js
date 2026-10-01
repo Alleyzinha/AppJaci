@@ -2,6 +2,7 @@ import React from 'react';
 import { AcoesJaci } from '@/components/ui/IdentidadeJaci';
 
 const actions = [
+  { id: 'chat', title: 'Chat ao vivo', icon: 'chatbubbles-outline' },
   {
     id: 'configuracao',
     title: 'Configuração',

@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { verifyEmail, resendEmail } from '@/features/auth/api/auth.api';
+import { mensagemErroApi } from '@/services/api/api';
 
 import { useCadastroStore } from '@/stores/cadastro.store';
 
@@ -34,6 +35,8 @@ export default function ConfirmarEmailScreen() {
   const [reenviando, setReenviando] = useState(false);
 
   const [codigoEnviado, setCodigoEnviado] = useState(false);
+  const [erroConfirmacao, setErroConfirmacao] = useState('');
+  const [confirmando, setConfirmando] = useState(false);
 
   const formularioValido = codigo.trim().length === 6;
 
@@ -44,7 +47,9 @@ export default function ConfirmarEmailScreen() {
   };
 
   const handleConfirmar = async () => {
-    if (!formularioValido) return;
+    if (!formularioValido || confirmando) return;
+    setConfirmando(true);
+    setErroConfirmacao('');
 
     try {
       const resposta = await verifyEmail({
@@ -61,10 +66,9 @@ export default function ConfirmarEmailScreen() {
         },
       });
     } catch (error) {
-      Alert.alert(
-        'Código inválido',
-        error?.response?.data?.error ?? 'Não foi possível confirmar seu email.',
-      );
+      setErroConfirmacao(mensagemErroApi(error, 'Não foi possível confirmar seu e-mail.'));
+    } finally {
+      setConfirmando(false);
     }
   };
 
@@ -72,11 +76,12 @@ export default function ConfirmarEmailScreen() {
     if (reenviando) return;
     setReenviando(true);
     setCodigoEnviado(false);
+    setErroConfirmacao('');
     try {
       await resendEmail({ email: emailExibido });
       setCodigoEnviado(true);
     } catch (error) {
-      Alert.alert('Não foi possível reenviar', error?.response?.data?.error || 'Tente novamente.');
+      setErroConfirmacao(mensagemErroApi(error, 'Não foi possível reenviar o código.'));
     } finally {
       setReenviando(false);
     }
@@ -222,9 +227,15 @@ export default function ConfirmarEmailScreen() {
             {/* BOTÕES */}
 
             <View style={styles.footerGroup}>
+              {erroConfirmacao ? (
+                <Text accessibilityRole="alert" style={styles.invalidText}>
+                  {erroConfirmacao}
+                </Text>
+              ) : null}
               <View style={styles.buttonContainer}>
                 <AppButton
                   title="Confirmar"
+                  loading={confirmando}
 
                   disabled={!formularioValido}
 

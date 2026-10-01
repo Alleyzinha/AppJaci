@@ -2,7 +2,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -29,6 +28,7 @@ import { useLogin } from '@/features/auth/hooks/useLogin';
 import { loginSchema } from '@/features/auth/schemas/login.schema';
 
 import { useAuthStore } from '@/stores/auth.store';
+import { mensagemErroApi } from '@/services/api/api';
 
 import { styles } from './styles';
 
@@ -106,7 +106,7 @@ export default function LoginScreen() {
     } catch (error) {
       setError('password', {
         type: 'server',
-        message: error?.response?.data?.error ?? 'Email ou senha inválidos.',
+        message: mensagemErroApi(error, 'Não foi possível entrar. Tente novamente.'),
       });
     }
   };

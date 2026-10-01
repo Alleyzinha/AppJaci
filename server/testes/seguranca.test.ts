@@ -48,6 +48,17 @@ test('segredo padrão não é aceito', () => {
 test('rotas privadas rejeitam visitante antes de consultar o banco', async () => {
   const app = await criarAplicacao(false);
   try {
+    const preflight = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/chat/1/lidas?modo=rede',
+      headers: {
+        origin: 'http://localhost:8081',
+        'access-control-request-method': 'PATCH',
+        'access-control-request-headers': 'authorization,content-type',
+      },
+    });
+    assert.equal(preflight.statusCode, 204);
+    assert.match(preflight.headers['access-control-allow-methods']!, /PATCH/);
     for (const url of [
       '/api/diario',
       '/api/localizacao',
@@ -56,6 +67,9 @@ test('rotas privadas rejeitam visitante antes de consultar o banco', async () =>
       '/api/users/me',
       '/api/admin/usuarios',
       '/api/admin/resumo',
+      '/api/chat/contatos',
+      '/api/chat/1/mensagens?modo=rede',
+      '/api/chat/assistente/historico',
     ]) {
       const resposta = await app.inject({ method: 'GET', url });
       assert.equal(resposta.statusCode, 401, url);

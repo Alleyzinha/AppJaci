@@ -11,7 +11,13 @@ try {
     `CREATE DATABASE IF NOT EXISTS \`${nome}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
   );
   await conexao.changeUser({ database: nome });
-  const sql = await readFile(new URL('../../banco/001_estrutura.sql', import.meta.url), 'utf8');
+  const sql = (
+    await Promise.all(
+      ['001_estrutura.sql', '002_chat.sql'].map((arquivo) =>
+        readFile(new URL(`../../banco/${arquivo}`, import.meta.url), 'utf8'),
+      ),
+    )
+  ).join('\n');
   // O arquivo contém somente DDL controlado pelo projeto, sem SQL recebido da API.
   for (const comando of sql
     .replace(/--[^\n]*/g, '')

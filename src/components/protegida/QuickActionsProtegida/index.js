@@ -17,7 +17,7 @@ const actions = [
   {
     id: 'chat',
     icon: 'chatbubble-ellipses-outline',
-    label: 'Acolhimento',
+    label: 'Chat ao vivo',
   },
 
   {

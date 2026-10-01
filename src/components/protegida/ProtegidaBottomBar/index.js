@@ -10,7 +10,7 @@ const items = [
 
   {
     id: 'chat',
-    label: 'Apoio',
+    label: 'Chat',
     icon: 'chatbubble-ellipses-outline',
   },
 
