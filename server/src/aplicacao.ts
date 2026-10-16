@@ -5,7 +5,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { z, ZodError } from 'zod';
 import { consultar } from './banco/conexao.js';
-import { segredo } from './seguranca.js';
+import { ErroHttp, segredo } from './seguranca.js';
 import { rotasAutenticacao } from './rotas/autenticacao.js';
 import { rotasGuardioes } from './rotas/guardioes.js';
 import { rotasProtecao } from './rotas/protecao.js';
@@ -38,7 +38,7 @@ export async function criarAplicacao(logger = true) {
     const falha = erro as Error & { code?: string; statusCode?: number };
     if (falha.code === 'ER_DUP_ENTRY')
       return reply.code(409).send({ error: 'Este cadastro já existe.' });
-    if (falha.statusCode && falha.statusCode < 500)
+    if (falha.statusCode && (falha.statusCode < 500 || erro instanceof ErroHttp))
       return reply.code(falha.statusCode).send({
         error:
           falha.statusCode === 429

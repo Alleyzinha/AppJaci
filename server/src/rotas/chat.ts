@@ -26,9 +26,14 @@ export async function autorizarConversa(
   if (id === usuario.idUsuario) throw new ErroHttp(403, 'Escolha outro contato.');
   if (modo === 'rede') {
     const [vinculo] = await consultar(
-      `SELECT idGuardiao FROM tbGuardiao WHERE status = 'ativo' AND
-      ((idUsuario = ? AND idContaGuardiao = ?) OR (idUsuario = ? AND idContaGuardiao = ?)) FOR UPDATE`,
-      [usuario.idUsuario, id, id, usuario.idUsuario],
+      `SELECT g.idGuardiao FROM tbGuardiao g
+      LEFT JOIN tbVinculo v ON v.idGuardiao = g.idGuardiao AND v.status = 'Ativo'
+      LEFT JOIN tbProtegida p ON p.idProtegida = v.idProtegida
+      WHERE g.status = 'ativo' AND (
+        (v.idVinculo IS NOT NULL AND ((p.idUsuario = ? AND g.idContaGuardiao = ?) OR (p.idUsuario = ? AND g.idContaGuardiao = ?)))
+        OR (v.idVinculo IS NULL AND ((g.idUsuario = ? AND g.idContaGuardiao = ?) OR (g.idUsuario = ? AND g.idContaGuardiao = ?)))
+      ) FOR UPDATE`,
+      [usuario.idUsuario, id, id, usuario.idUsuario, usuario.idUsuario, id, id, usuario.idUsuario],
       executor,
     );
     if (vinculo) return;
@@ -56,10 +61,17 @@ export async function rotasChat(app: FastifyInstance) {
     reply.header('Cache-Control', 'no-store');
     const usuario = req.usuario;
     const rede = await consultar<{ id: number; nome: string }>(
-      `SELECT DISTINCT u.idUsuario id, u.nome FROM tbUsuario u JOIN tbGuardiao g ON
+      `SELECT DISTINCT u.idUsuario id, u.nome FROM tbUsuario u
+      JOIN tbProtegida p ON p.idUsuario = u.idUsuario
+      JOIN tbVinculo v ON v.idProtegida = p.idProtegida AND v.status = 'Ativo'
+      JOIN tbGuardiao g ON g.idGuardiao = v.idGuardiao
+      WHERE ((p.idUsuario = ? AND g.idContaGuardiao = u.idUsuario) OR (g.idContaGuardiao = ? AND p.idUsuario = u.idUsuario))
+      AND g.status = 'ativo' AND u.emailConfirmadoEm IS NOT NULL
+      UNION
+      SELECT DISTINCT u.idUsuario id, u.nome FROM tbUsuario u JOIN tbGuardiao g ON
       ((g.idUsuario = ? AND g.idContaGuardiao = u.idUsuario) OR (g.idContaGuardiao = ? AND g.idUsuario = u.idUsuario))
       WHERE g.status = 'ativo' AND u.emailConfirmadoEm IS NOT NULL`,
-      [usuario.idUsuario, usuario.idUsuario],
+      [usuario.idUsuario, usuario.idUsuario, usuario.idUsuario, usuario.idUsuario],
     );
     const emails = emailsEquipe();
     const atendentes = emails.length

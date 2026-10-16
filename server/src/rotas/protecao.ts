@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { consultar, executar, transacao } from '../banco/conexao.js';
 import { apenasProtegida, autenticar, ErroHttp } from '../seguranca.js';
+import { notificarGuardioesDoSos } from '../notificacoes.js';
 
 const identificador = z.object({ id: z.coerce.number().int().positive() });
 const entrada = z.object({
@@ -11,6 +12,147 @@ const entrada = z.object({
 });
 
 export async function rotasProtecao(app: FastifyInstance) {
+  app.post('/api/notificacoes/dispositivo', { preHandler: autenticar }, async (req) => {
+    const { token } = z
+      .object({ token: z.string().regex(/^Expo(nent)?PushToken\[[^\]]+\]$/).max(255) })
+      .parse(req.body);
+    await executar(
+      `INSERT INTO tbDispositivoPush (idUsuario, token) VALUES (?, ?)
+      ON DUPLICATE KEY UPDATE idUsuario = VALUES(idUsuario), atualizadoEm = CURRENT_TIMESTAMP(3)`,
+      [req.usuario.idUsuario, token],
+    );
+    return { ok: true };
+  });
+  app.delete('/api/notificacoes/dispositivo', { preHandler: autenticar }, async (req) => {
+    const { token } = z
+      .object({ token: z.string().regex(/^Expo(nent)?PushToken\[[^\]]+\]$/).max(255) })
+      .parse(req.body);
+    await executar('DELETE FROM tbDispositivoPush WHERE idUsuario = ? AND token = ?', [
+      req.usuario.idUsuario,
+      token,
+    ]);
+    return { ok: true };
+  });
+  app.get('/api/plano-seguranca', { preHandler: apenasProtegida }, async (req) => {
+    const [plano] = await consultar(
+      'SELECT contatos, locaisSeguros, passos, atualizadoEm FROM tbPlanoSeguranca WHERE idUsuario = ?',
+      [req.usuario.idUsuario],
+    );
+    return { plano: plano ?? { contatos: '', locaisSeguros: '', passos: '' } };
+  });
+  app.put('/api/plano-seguranca', { preHandler: apenasProtegida }, async (req) => {
+    const dados = z
+      .object({
+        contatos: z.string().trim().max(3000),
+        locaisSeguros: z.string().trim().max(3000),
+        passos: z.string().trim().max(5000),
+      })
+      .parse(req.body);
+    await executar(
+      `INSERT INTO tbPlanoSeguranca (idUsuario, contatos, locaisSeguros, passos)
+      VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE contatos = VALUES(contatos),
+      locaisSeguros = VALUES(locaisSeguros), passos = VALUES(passos)`,
+      [req.usuario.idUsuario, dados.contatos, dados.locaisSeguros, dados.passos],
+    );
+    return { ok: true };
+  });
+  app.get('/api/checkin', { preHandler: autenticar }, async (req) => {
+    if (req.usuario.perfil === 'protegida') {
+      const [checkin] = await consultar(
+        `SELECT intervaloHoras, observacao, proximoEm, confirmadoEm,
+        (proximoEm < UTC_TIMESTAMP(3)) AS atrasado FROM tbCheckin WHERE idUsuario = ?`,
+        [req.usuario.idUsuario],
+      );
+      return { checkin: checkin ?? null };
+    }
+    const checkins = await consultar(
+      `SELECT CAST(u.idUsuario AS CHAR) AS idUsuario, u.nome,
+      c.intervaloHoras, c.observacao, c.proximoEm, c.confirmadoEm,
+      (c.proximoEm < UTC_TIMESTAMP(3)) AS atrasado
+      FROM tbCheckin c JOIN tbUsuario u ON u.idUsuario = c.idUsuario
+      JOIN tbProtegida p ON p.idUsuario = u.idUsuario
+      JOIN tbVinculo v ON v.idProtegida = p.idProtegida AND v.status = 'Ativo'
+      JOIN tbGuardiao g ON g.idGuardiao = v.idGuardiao AND g.status = 'ativo'
+      WHERE g.idContaGuardiao = ? ORDER BY c.proximoEm ASC`,
+      [req.usuario.idUsuario],
+    );
+    return { checkins };
+  });
+  app.put('/api/checkin', { preHandler: apenasProtegida }, async (req) => {
+    const dados = z
+      .object({
+        intervaloHoras: z.number().int().min(1).max(24),
+        observacao: z.string().trim().max(300),
+      })
+      .parse(req.body);
+    const proximoEm = new Date(Date.now() + dados.intervaloHoras * 60 * 60 * 1000);
+    await executar(
+      `INSERT INTO tbCheckin (idUsuario, intervaloHoras, observacao, proximoEm)
+      VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE intervaloHoras = VALUES(intervaloHoras),
+      observacao = VALUES(observacao), proximoEm = VALUES(proximoEm), alertaAtrasoEnviadoEm = NULL`,
+      [req.usuario.idUsuario, dados.intervaloHoras, dados.observacao, proximoEm],
+    );
+    return { ok: true, proximoEm };
+  });
+  app.post('/api/checkin/confirmar', { preHandler: apenasProtegida }, async (req) => {
+    const [checkin] = await consultar<{ intervaloHoras: number }>(
+      'SELECT intervaloHoras FROM tbCheckin WHERE idUsuario = ?',
+      [req.usuario.idUsuario],
+    );
+    if (!checkin) throw new ErroHttp(404, 'Configure um check-in primeiro.');
+    const proximoEm = new Date(Date.now() + checkin.intervaloHoras * 60 * 60 * 1000);
+    await executar(
+      'UPDATE tbCheckin SET confirmadoEm = ?, proximoEm = ?, alertaAtrasoEnviadoEm = NULL WHERE idUsuario = ?',
+      [new Date(), proximoEm, req.usuario.idUsuario],
+    );
+    return { ok: true, proximoEm };
+  });
+  app.get('/api/localizacao/permissoes', { preHandler: apenasProtegida }, async (req) => ({
+    permissoes: await consultar(
+      `SELECT CAST(g.idContaGuardiao AS CHAR) AS id, g.nome, g.email,
+      COALESCE(p.permitido, TRUE) AS permitido
+      FROM tbGuardiao g JOIN tbVinculo v ON v.idGuardiao = g.idGuardiao AND v.status = 'Ativo'
+      JOIN tbProtegida perfil ON perfil.idProtegida = v.idProtegida
+      LEFT JOIN tbPermissaoLocalizacao p ON p.idUsuario = perfil.idUsuario
+        AND p.idContaGuardiao = g.idContaGuardiao
+      WHERE perfil.idUsuario = ? AND g.status = 'ativo' ORDER BY g.nome`,
+      [req.usuario.idUsuario],
+    ),
+  }));
+  app.put('/api/localizacao/permissoes', { preHandler: apenasProtegida }, async (req) => {
+    const dados = z
+      .object({ guardiaoIds: z.array(z.number().int().positive()).max(50) })
+      .parse(req.body);
+    const unicos = new Set(dados.guardiaoIds);
+    if (unicos.size !== dados.guardiaoIds.length)
+      throw new ErroHttp(400, 'A lista de guardiões contém itens repetidos.');
+    await transacao(async (conexao) => {
+      const vinculados = await consultar<{ idContaGuardiao: number }>(
+        `SELECT g.idContaGuardiao FROM tbGuardiao g
+        JOIN tbVinculo v ON v.idGuardiao = g.idGuardiao AND v.status = 'Ativo'
+        JOIN tbProtegida p ON p.idProtegida = v.idProtegida
+        WHERE p.idUsuario = ? AND g.status = 'ativo'`,
+        [req.usuario.idUsuario],
+        conexao,
+      );
+      const idsValidos = new Set(vinculados.map((item) => Number(item.idContaGuardiao)));
+      if (dados.guardiaoIds.some((id) => !idsValidos.has(id)))
+        throw new ErroHttp(400, 'Selecione apenas guardiões vinculados à sua conta.');
+      await executar(
+        'DELETE FROM tbPermissaoLocalizacao WHERE idUsuario = ?',
+        [req.usuario.idUsuario],
+        conexao,
+      );
+      for (const id of idsValidos) {
+        await executar(
+          'INSERT INTO tbPermissaoLocalizacao (idUsuario, idContaGuardiao, permitido) VALUES (?, ?, ?)',
+          [req.usuario.idUsuario, id, unicos.has(id)],
+          conexao,
+        );
+      }
+    });
+    return { ok: true };
+  });
   app.get('/api/diario', { preHandler: apenasProtegida }, async (req) => {
     const { pagina } = z
       .object({ pagina: z.coerce.number().int().min(1).max(100000).default(1) })
@@ -114,11 +256,18 @@ export async function rotasProtecao(app: FastifyInstance) {
     const sql =
       req.usuario.perfil === 'protegida'
         ? 'SELECT l.*, u.nome FROM tbLocalizacaoUsuario l JOIN tbUsuario u ON u.idUsuario = l.idUsuario WHERE l.idUsuario = ?'
-        : `SELECT l.*, u.nome FROM tbLocalizacaoUsuario l JOIN tbUsuario u ON u.idUsuario = l.idUsuario JOIN tbGuardiao g ON g.idUsuario = l.idUsuario WHERE g.idContaGuardiao = ? AND g.status = 'ativo' AND l.compartilhada = TRUE`;
+        : `SELECT l.*, u.nome FROM tbLocalizacaoUsuario l JOIN tbUsuario u ON u.idUsuario = l.idUsuario
+        JOIN tbProtegida p ON p.idUsuario = l.idUsuario
+        JOIN tbVinculo v ON v.idProtegida = p.idProtegida AND v.status = 'Ativo'
+        JOIN tbGuardiao g ON g.idGuardiao = v.idGuardiao
+        LEFT JOIN tbPermissaoLocalizacao perm ON perm.idUsuario = p.idUsuario
+          AND perm.idContaGuardiao = g.idContaGuardiao
+        WHERE g.idContaGuardiao = ? AND g.status = 'ativo' AND l.compartilhada = TRUE
+          AND (perm.idPermissao IS NULL OR perm.permitido = TRUE)`;
     return { localizacoes: await consultar(sql, [req.usuario.idUsuario]) };
   });
   app.post('/api/sos', { preHandler: apenasProtegida }, async (req, reply) => {
-    const alerta = await transacao(async (conexao) => {
+    const resultadoSos = await transacao(async (conexao) => {
       await consultar(
         'SELECT idUsuario FROM tbUsuario WHERE idUsuario = ? FOR UPDATE',
         [req.usuario.idUsuario],
@@ -129,16 +278,23 @@ export async function rotasProtecao(app: FastifyInstance) {
         [req.usuario.idUsuario],
         conexao,
       );
-      if (ativo) return ativo;
+      if (ativo) return { alerta: ativo, criado: false };
       const resultado = await executar(
-        'INSERT INTO tbAlertaSos (idUsuario) VALUES (?)',
+        'INSERT INTO tbAlertaSos (idUsuario, data, hora) VALUES (?, UTC_DATE(), UTC_TIME())',
         [req.usuario.idUsuario],
         conexao,
       );
-      return { idAlertaSos: resultado.insertId };
+      return { alerta: { idAlertaSos: resultado.insertId }, criado: true };
     });
+    if (resultadoSos.criado) {
+      try {
+        await notificarGuardioesDoSos(req.usuario.idUsuario);
+      } catch (erro) {
+        req.log.error({ err: erro, idAlertaSos: resultadoSos.alerta.idAlertaSos }, 'Falha ao enviar push SOS');
+      }
+    }
     return reply.code(201).send({
-      ...alerta,
+      ...resultadoSos.alerta,
       mensagem:
         'Alerta registrado. Seus guardiões podem consultá-lo no aplicativo. Não há envio de SMS ou acionamento automático da polícia.',
     });
@@ -146,13 +302,42 @@ export async function rotasProtecao(app: FastifyInstance) {
   app.get('/api/sos', { preHandler: autenticar }, async (req) => {
     const sql =
       req.usuario.perfil === 'protegida'
-        ? 'SELECT a.*, u.nome FROM tbAlertaSos a JOIN tbUsuario u ON u.idUsuario = a.idUsuario WHERE a.idUsuario = ?'
-        : `SELECT a.*, u.nome FROM tbAlertaSos a JOIN tbUsuario u ON u.idUsuario = a.idUsuario JOIN tbGuardiao g ON g.idUsuario = a.idUsuario WHERE g.idContaGuardiao = ? AND g.status = 'ativo'`;
+        ? `SELECT a.*, u.nome, r.confirmadoEm, g.nome AS guardiaoQueConfirmou
+          FROM tbAlertaSos a JOIN tbUsuario u ON u.idUsuario = a.idUsuario
+          LEFT JOIN tbSosReconhecimento r ON r.idAlertaSos = a.idAlertaSos
+          LEFT JOIN tbUsuario g ON g.idUsuario = r.idContaGuardiao WHERE a.idUsuario = ?`
+        : `SELECT a.*, u.nome, r.confirmadoEm, confirmado.nome AS guardiaoQueConfirmou
+        FROM tbAlertaSos a JOIN tbUsuario u ON u.idUsuario = a.idUsuario
+        JOIN tbProtegida p ON p.idUsuario = a.idUsuario
+        JOIN tbVinculo v ON v.idProtegida = p.idProtegida AND v.status = 'Ativo'
+        JOIN tbGuardiao g ON g.idGuardiao = v.idGuardiao
+        LEFT JOIN tbSosReconhecimento r ON r.idAlertaSos = a.idAlertaSos
+        LEFT JOIN tbUsuario confirmado ON confirmado.idUsuario = r.idContaGuardiao
+        WHERE g.idContaGuardiao = ? AND g.status = 'ativo'`;
     return {
       alertas: await consultar(`${sql} ORDER BY a.dataHora DESC, a.idAlertaSos DESC LIMIT 50`, [
         req.usuario.idUsuario,
       ]),
     };
+  });
+  app.patch('/api/sos/:id/confirmar-recebimento', { preHandler: autenticar }, async (req) => {
+    if (req.usuario.perfil !== 'guardiao')
+      throw new ErroHttp(403, 'A confirmação de alertas é exclusiva de guardiões.');
+    const { id } = identificador.parse(req.params);
+    const [alerta] = await consultar<{ idAlertaSos: number }>(
+      `SELECT a.idAlertaSos FROM tbAlertaSos a
+      JOIN tbProtegida p ON p.idUsuario = a.idUsuario
+      JOIN tbVinculo v ON v.idProtegida = p.idProtegida AND v.status = 'Ativo'
+      JOIN tbGuardiao g ON g.idGuardiao = v.idGuardiao AND g.status = 'ativo'
+      WHERE a.idAlertaSos = ? AND a.status = 'ativo' AND g.idContaGuardiao = ?`,
+      [id, req.usuario.idUsuario],
+    );
+    if (!alerta) throw new ErroHttp(404, 'Alerta ativo não encontrado na sua rede.');
+    await executar(
+      'INSERT IGNORE INTO tbSosReconhecimento (idAlertaSos, idContaGuardiao) VALUES (?, ?)',
+      [id, req.usuario.idUsuario],
+    );
+    return { ok: true };
   });
   app.patch('/api/sos/:id/encerrar', { preHandler: apenasProtegida }, async (req) => {
     const { id } = identificador.parse(req.params);

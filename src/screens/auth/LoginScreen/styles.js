@@ -1,186 +1,225 @@
 import { StyleSheet } from 'react-native';
 
+import { colors, fontFamilies, radius, spacing, typography } from '@/styles/tokens';
+
 export const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
     flex: 1,
+    backgroundColor: colors.authEntry.background,
   },
 
-  safeArea: {
+  keyboard: {
     flex: 1,
   },
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 26,
-    paddingBottom: 40,
-    justifyContent: 'center',
-  },
-
-  glowTopRight: {
-    position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-  },
-
-  glowBottomLeft: {
-    position: 'absolute',
-    bottom: -80,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: 'rgba(139, 72, 199, 0.25)',
-  },
-
-  topNavigation: {
     width: '100%',
-    maxWidth: 520,
+    maxWidth: 430,
     alignSelf: 'center',
-    paddingTop: 24,
-    paddingBottom: 12,
-    alignItems: 'flex-start',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+
+  header: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
+    width: 44,
+    height: 44,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.authEntry.divider,
+    backgroundColor: colors.authEntry.surface,
   },
 
-  pressed: {
-    opacity: 0.8,
+  brandName: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 27,
+    lineHeight: 34,
+    letterSpacing: -1.5,
   },
 
-  mainWrapper: {
+  brandPeriod: {
+    color: colors.common.magenta,
+  },
+
+  content: {
+    flex: 1,
     width: '100%',
-    maxWidth: 520,
+    maxWidth: 420,
     alignSelf: 'center',
-    gap: 20,
-    marginTop: 0,
-    paddingVertical: 24,
-    paddingHorizontal: 28,
-    borderRadius: 28,
-    backgroundColor: 'rgba(29, 16, 67, 0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
+    paddingTop: spacing.xl,
   },
 
-  headerGroup: {
+  title: {
+    maxWidth: 330,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 36,
+    lineHeight: 40,
+    letterSpacing: -1.2,
+  },
+
+  subtitle: {
+    marginTop: spacing.sm,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: 15,
+    lineHeight: 23,
+  },
+
+  profileContext: {
+    minHeight: 68,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xl,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.authEntry.divider,
   },
 
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+  contextLabel: {
+    color: colors.authEntry.tagline,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.xs,
+    lineHeight: 18,
+  },
+
+  contextValue: {
+    marginTop: spacing.xs,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+
+  textAction: {
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    paddingHorizontal: spacing.sm,
   },
 
-  titulo: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 1,
+  textActionLabel: {
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.xs,
+    lineHeight: 18,
+    textDecorationLine: 'underline',
   },
 
-  subtitulo: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 15,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 10,
-    lineHeight: 20,
-  },
-
-  formGroup: {
-    width: '100%',
-    gap: 14,
+  form: {
+    marginTop: spacing.lg,
+    gap: spacing.lg,
   },
 
   inputContainer: {
-    gap: 6,
+    gap: spacing.xs,
   },
 
   label: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginLeft: 4,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.sm,
+    lineHeight: 20,
   },
 
-  errorText: {
-    color: '#FFD6D6',
-    fontSize: 13,
-    marginLeft: 4,
+  passwordLabelRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+
+  recoveryAction: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 
   inputWrapper: {
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 16,
-    minHeight: 56,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.authEntry.inputBorder,
+    borderRadius: radius.md,
+    backgroundColor: colors.common.white,
   },
 
-  inputIcon: {
-    marginRight: 10,
+  inputWrapperFocused: {
+    borderColor: colors.protegida.authAccent,
+    borderWidth: 2,
+  },
+
+  inputWrapperError: {
+    borderColor: colors.authEntry.error,
+    borderWidth: 2,
   },
 
   input: {
     minWidth: 0,
-    paddingVertical: 12,
     flex: 1,
-    color: '#FFFFFF',
+    paddingVertical: spacing.sm,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.body,
     fontSize: 16,
+    includeFontPadding: false,
   },
 
-  eyeIcon: {
-    padding: 6,
-  },
-
-  footerGroup: {
-    width: '100%',
+  eyeButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    gap: 16,
-    marginTop: 8,
+    justifyContent: 'center',
+    marginRight: -spacing.xs,
   },
 
-  buttonContainer: {
-    width: '100%',
+  errorText: {
+    marginTop: spacing.xs,
+    color: colors.authEntry.error,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: typography.xs,
+    lineHeight: 18,
   },
 
-  cadastroLink: {
-    paddingVertical: 6,
+  signupPrompt: {
+    minHeight: 44,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.lg,
   },
 
-  cadastroText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
+  signupPromptText: {
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.sm,
   },
 
-  cadastroBold: {
-    color: '#FFD000',
-    fontWeight: '700',
+  signupLinkButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+
+  signupLink: {
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: typography.sm,
+    textDecorationLine: 'underline',
+  },
+
+  pressed: {
+    opacity: 0.72,
   },
 });

@@ -29,7 +29,10 @@ type Codigo = { idCodigo: number; codigoHash: string; expiraEm: Date; tentativas
 type FinalidadeCodigo = 'email' | 'senha' | 'pin';
 
 export async function rotasAutenticacao(app: FastifyInstance) {
-  async function enviarCodigo(usuario: Usuario, finalidade: FinalidadeCodigo) {
+  async function enviarCodigo(
+    usuario: Usuario,
+    finalidade: FinalidadeCodigo,
+  ): Promise<string | undefined> {
     const valor = String(randomInt(100000, 1000000));
     const hash = await bcrypt.hash(valor, 10);
     const validade = new Date(Date.now() + 900000);
@@ -45,19 +48,29 @@ export async function rotasAutenticacao(app: FastifyInstance) {
         { email: usuario.email, codigo: valor },
         'Código de desenvolvimento (não usar em produção)',
       );
-      return;
+      return valor;
     }
-    await enviarEmail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: usuario.email,
-      subject:
-        finalidade === 'email'
-          ? 'Confirme seu e-mail na Jaci'
-          : finalidade === 'pin'
-            ? 'Autorização para mudar seu PIN na Jaci'
-            : 'Recuperação de senha Jaci',
-      text: `Seu código Jaci é ${valor}. Ele expira em 15 minutos.`,
-    });
+    try {
+      await enviarEmail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: usuario.email,
+        subject:
+          finalidade === 'email'
+            ? 'Confirme seu e-mail na Jaci'
+            : finalidade === 'pin'
+              ? 'Autorização para mudar seu PIN na Jaci'
+              : 'Recuperação de senha Jaci',
+        text: `Seu código Jaci é ${valor}. Ele expira em 15 minutos.`,
+      });
+      return undefined;
+    } catch (erro) {
+      if (process.env.NODE_ENV === 'production') throw erro;
+      app.log.warn(
+        { email: usuario.email, codigo: valor },
+        'Falha no e-mail; código de desenvolvimento para continuar localmente',
+      );
+      return valor;
+    }
   }
 
   async function consumirCodigo(
@@ -129,8 +142,11 @@ export async function rotasAutenticacao(app: FastifyInstance) {
         if (existente.emailConfirmadoEm)
           throw new ErroHttp(409, 'Este e-mail já está cadastrado. Faça login.');
         // O cadastro público nunca substitui a senha de uma conta existente.
-        await enviarCodigo(existente, 'email');
-        return reply.code(200).send({ requiresEmailVerification: true });
+        const developmentCode = await enviarCodigo(existente, 'email');
+        return reply.code(200).send({
+          requiresEmailVerification: true,
+          ...(developmentCode ? { developmentCode } : {}),
+        });
       }
       const resultado = await executar(
         'INSERT INTO tbUsuario (nome, email, telefone, senha, perfil) VALUES (?, ?, ?, ?, ?)',
@@ -145,10 +161,17 @@ export async function rotasAutenticacao(app: FastifyInstance) {
       const [usuario] = await consultar<Usuario>('SELECT * FROM tbUsuario WHERE idUsuario = ?', [
         resultado.insertId,
       ]);
-      await enviarCodigo(usuario, 'email');
-      return reply
-        .code(201)
-        .send({ user: usuarioPublico(usuario), requiresEmailVerification: true });
+      if (usuario.perfil === 'protegida') {
+        await executar('INSERT INTO tbProtegida (idUsuario, pinHash) VALUES (?, NULL)', [
+          usuario.idUsuario,
+        ]);
+      }
+      const developmentCode = await enviarCodigo(usuario, 'email');
+      return reply.code(201).send({
+        user: usuarioPublico(usuario),
+        requiresEmailVerification: true,
+        ...(developmentCode ? { developmentCode } : {}),
+      });
     },
   );
 
@@ -165,8 +188,9 @@ export async function rotasAutenticacao(app: FastifyInstance) {
       const [usuario] = await consultar<Usuario>('SELECT * FROM tbUsuario WHERE email = ?', [
         dados.email,
       ]);
-      if (usuario && !usuario.emailConfirmadoEm) await enviarCodigo(usuario, 'email');
-      return { ok: true };
+      const developmentCode =
+        usuario && !usuario.emailConfirmadoEm ? await enviarCodigo(usuario, 'email') : undefined;
+      return { ok: true, ...(developmentCode ? { developmentCode } : {}) };
     },
   );
   app.post('/api/auth/pin/setup', async (req) => {
@@ -177,12 +201,14 @@ export async function rotasAutenticacao(app: FastifyInstance) {
       })
       .parse(req.body);
     const token = validarToken(dados.setupToken, 'pin');
+    const pinHash = await bcrypt.hash(dados.pin, 12);
     const resultado = await executar(
       'UPDATE tbUsuario SET pinHash = ? WHERE idUsuario = ? AND pinHash IS NULL AND emailConfirmadoEm IS NOT NULL AND versaoSessao = ?',
-      [await bcrypt.hash(dados.pin, 12), token.sub!, token.versao],
+      [pinHash, token.sub!, token.versao],
     );
     if (!resultado.affectedRows)
       throw new ErroHttp(409, 'PIN já configurado ou autorização expirada.');
+    await executar('UPDATE tbProtegida SET pinHash = ? WHERE idUsuario = ?', [pinHash, token.sub!]);
     return { ok: true };
   });
   app.post(
@@ -190,9 +216,16 @@ export async function rotasAutenticacao(app: FastifyInstance) {
     { preHandler: autenticar, config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
     async (req) => {
       const { pin } = z.object({ pin: z.string().regex(/^\d{4}$/) }).parse(req.body);
-      if (!req.usuario.pinHash)
-        throw new ErroHttp(409, 'Configure seu PIN em Configurações > Mudar PIN.');
-      if (!(await bcrypt.compare(pin, req.usuario.pinHash)))
+      const [perfilProtegido] =
+        req.usuario.perfil === 'protegida'
+          ? await consultar<{ pinHash: string | null }>(
+              'SELECT pinHash FROM tbProtegida WHERE idUsuario = ?',
+              [req.usuario.idUsuario],
+            )
+          : [];
+      const pinHash = perfilProtegido?.pinHash ?? req.usuario.pinHash;
+      if (!pinHash) throw new ErroHttp(409, 'Configure seu PIN em Configurações > Mudar PIN.');
+      if (!(await bcrypt.compare(pin, pinHash)))
         throw new ErroHttp(403, 'PIN incorreto. Tente novamente.');
       return { ok: true };
     },
@@ -213,8 +246,13 @@ export async function rotasAutenticacao(app: FastifyInstance) {
       })
       .parse(req.body);
     const usuario = await consumirCodigo(req.usuario.email, dados.code, 'pin');
+    const pinHash = await bcrypt.hash(dados.pin, 12);
     await executar('UPDATE tbUsuario SET pinHash = ? WHERE idUsuario = ?', [
-      await bcrypt.hash(dados.pin, 12),
+      pinHash,
+      req.usuario.idUsuario,
+    ]);
+    await executar('UPDATE tbProtegida SET pinHash = ? WHERE idUsuario = ?', [
+      pinHash,
       req.usuario.idUsuario,
     ]);
     return { ok: true, user: usuarioPublico(usuario) };
@@ -240,7 +278,13 @@ export async function rotasAutenticacao(app: FastifyInstance) {
     '/api/auth/login',
     { config: { rateLimit: { max: 10, timeWindow: '15 minutes' } } },
     async (req) => {
-      const dados = z.object({ email, password: z.string().min(1).max(100) }).parse(req.body);
+      const dados = z
+        .object({
+          email,
+          password: z.string().min(1).max(100),
+          profile: z.enum(['protegida', 'guardiao']),
+        })
+        .parse(req.body);
       const [usuario] = await consultar<Usuario>('SELECT * FROM tbUsuario WHERE email = ?', [
         dados.email,
       ]);
@@ -248,6 +292,11 @@ export async function rotasAutenticacao(app: FastifyInstance) {
         throw new ErroHttp(401, 'E-mail ou senha inválidos.');
       if (!usuario.emailConfirmadoEm)
         throw new ErroHttp(403, 'Confirme seu e-mail antes de entrar.');
+      if (usuario.perfil !== dados.profile)
+        throw new ErroHttp(
+          403,
+          `Esta conta está cadastrada como ${usuario.perfil === 'guardiao' ? 'Guardião' : 'Protegida'}. Toque em “Trocar perfil” para entrar.`,
+        );
       return { accessToken: tokenPara(usuario), user: usuarioPublico(usuario) };
     },
   );

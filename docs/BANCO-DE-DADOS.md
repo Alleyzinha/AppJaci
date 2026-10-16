@@ -1,40 +1,33 @@
-﻿# Banco de dados Jaci
+# Banco de dados Jaci
 
-A referência é o arquivo `Documento de Thayna.sql`, fornecido pela usuária. Ele descrevia cinco entidades usando sintaxe do SQL Server (`GO` e chave estrangeira inline). A versão do projeto usa MySQL, InnoDB, UTF-8 e IDs inteiros autoincrementais.
+O arquivo `bdJaci.sql` fornecido pela usuária é a referência do modelo funcional. Ele foi escrito para SQL Server; o projeto usa MySQL 8.4, então seus tipos e comandos foram convertidos para MySQL nos arquivos em `server/banco/`.
 
-| Referência             | Implementação                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------------ |
-| `tbUsuario`            | Identidade, senha com hash, perfil, telefone, confirmação de e-mail e versão da sessão     |
-| `tbLocalizacaoUsuario` | Posição mais recente e CEP opcional; dados pessoais e senha não são duplicados             |
-| `tbGuardiao`           | Vínculo entre protegida e conta do guardião, parentesco, disponibilidade, CEP e observação |
-| `tbDiario`             | Notas de texto de até 500 caracteres, título e data/hora                                   |
-| `tbAlertaSos`          | Data/hora unificada, status ativo/encerrado e encerramento                                 |
-| `tbCodigoAcesso`       | Códigos de confirmação/recuperação com hash, validade e limite de tentativas               |
+## Mapeamento do modelo
 
-As credenciais de um guardião ficam em `tbUsuario`, como as de qualquer conta. O formulário de guardião inclui nome, e-mail, telefone, parentesco, disponibilidade, CEP e observação.
+| Entidade do arquivo                                                                   | Implementação MySQL | Uso na API                                                                                                             |
+| ------------------------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `tbUsuario`                                                                           | `tbUsuario`         | Conta, autenticação, perfil e dados de sessão; alguns campos dão suporte à confirmação de e-mail e recuperação segura. |
+| `tbProtegida`                                                                         | `tbProtegida`       | Dados específicos da pessoa protegida e relação 1:1 com a conta.                                                       |
+| `tbGuardiao`                                                                          | `tbGuardiao`        | Dados de contato do guardião.                                                                                          |
+| `tbVinculo`                                                                           | `tbVinculo`         | Relaciona uma pessoa protegida ao contato guardião.                                                                    |
+| `tbLocalizacaoUsuario`, `tbDiario`, `tbAlertaSos`                                     | Mesmo nome          | Localização, diário e SOS. O SOS mantém `data` e `hora` do modelo e `dataHora` para ordenação na API.                  |
+| `tbAdmin`, `tbConversa`, `tbMensagem`, `tbNotificacao`, `tbDispositivo`, `tbLogAdmin` | Mesmo nome          | Entidades administrativas, de conversa, notificação, dispositivo e auditoria.                                          |
 
-```mermaid
-erDiagram
-  tbUsuario ||--o{ tbGuardiao : "protegida ou conta guardiã"
-  tbUsuario ||--o| tbLocalizacaoUsuario : "compartilha"
-  tbUsuario ||--o{ tbDiario : "escreve"
-  tbUsuario ||--o{ tbAlertaSos : "registra"
-  tbUsuario ||--o{ tbCodigoAcesso : "confirma"
-```
+O backend também mantém tabelas de suporte para códigos de acesso, chat atual e assistente, pois esses recursos não estão descritos no arquivo recebido. Campos como telefone, perfil da conta, confirmação de e-mail e hash de sessão continuam em `tbUsuario` para atender os fluxos existentes.
+
+## Preparação e atualização
+
+`npm run db:setup` aplica, em ordem, `001_estrutura.sql`, `002_chat.sql` e `003_modelo_bdJaci.sql`. A terceira etapa cria as entidades do modelo recebido e converte os registros de guardiões já existentes em vínculos, sem apagar tabelas ou registros. Também cria `tbProtegida` para contas protegidas existentes e preenche `data`/`hora` de alertas anteriores.
+
+O banco configurado em `server/.env` continua sendo `bdJaci` por padrão. A senha e o usuário são definidos nessa configuração local ou em `server/.env.example` como referência.
+
+O SQL recebido contém apenas a estrutura, sem registros para importar. Contas já existentes no MySQL são preservadas; não há importação de dados de outro servidor ou conversão de senhas em texto puro.
 
 ## Integridade e acesso
 
-- E-mail único; um vínculo por par protegida/guardião.
-- Chaves estrangeiras com remoção em cascata dos dados dependentes ao excluir uma conta.
-- Índices por proprietário/data no diário e nos alertas.
-- Apenas protegidas podem escrever notas, compartilhar posição e abrir/encerrar alertas.
-- Guardiões não acessam o diário; somente localização compartilhada e SOS de protegidas vinculadas.
-- Uma transação serializa a criação de SOS por usuária e reutiliza o alerta ativo.
-- Códigos são consumidos uma única vez, com validade de 15 minutos e até cinco tentativas.
+- E-mail único por conta e credenciais de guardiões associadas à conta em `tbUsuario`.
+- Chaves estrangeiras em InnoDB removem dados dependentes em cascata ao excluir uma conta.
+- A API autoriza localização e alertas de SOS de acordo com vínculos ativos em `tbVinculo`.
+- Apenas pessoas protegidas podem usar o diário, compartilhar localização e abrir/encerrar alertas.
+- Senhas, PINs e códigos de acesso são armazenados como hashes.
 - Horários são tratados em UTC no driver e formatados em português pela interface.
-
-## Banco anterior
-
-O banco SQLite antigo, se existir, permanece no disco e não é lido pela nova API. A estrutura SQL original fornecida não contém registros para importar. Não há migração automática dos dados antigos: faça backup e planeje a conversão dos IDs e vínculos antes de migrar contas reais. Não execute alterações destrutivas para contornar incompatibilidades.
-
-`001_estrutura.sql` é o esquema inicial desta versão. Mudanças futuras em tabelas já criadas precisam de novos arquivos com `ALTER TABLE`, revisados e aplicados em ordem; `CREATE TABLE IF NOT EXISTS` não altera uma estrutura já existente.

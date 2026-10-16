@@ -1,5 +1,5 @@
 import EstadoVazio from '@/components/ui/EstadoVazio';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -7,10 +7,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import TelaPadrao, { Botao, Cartao, Mensagem, useCoresTela } from '@/components/ui/TelaPadrao';
 import { listGuardians, deleteGuardian } from '@/features/guardians/api/guardians.api';
 import { mensagemErro } from '@/features/protecao/api/protecao.api';
+import { salvarContatosOffline } from '@/features/protecao/local/apoioOffline';
+import { useAuthStore } from '@/stores/auth.store';
 import { styles } from './styles';
 
 export default function ProtegidaGuardioesScreen() {
   const cores = useCoresTela();
+  const userId = useAuthStore((estado) => estado.userId);
   const cliente = useQueryClient();
   const [confirmacao, definirConfirmacao] = useState(null);
   const [erroTelefone, definirErroTelefone] = useState('');
@@ -20,6 +23,9 @@ export default function ProtegidaGuardioesScreen() {
       cliente.invalidateQueries({ queryKey: ['guardioes'] });
     }, [cliente]),
   );
+  useEffect(() => {
+    if (consulta.data && userId) salvarContatosOffline(userId, consulta.data).catch(() => {});
+  }, [consulta.data, userId]);
   const excluir = useMutation({
     mutationFn: deleteGuardian,
     onSuccess: () => {

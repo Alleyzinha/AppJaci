@@ -17,9 +17,29 @@ export const colors = {
     success: '#2E7D32',
   },
 
+  authEntry: {
+    background: '#FBF7F1',
+    surface: '#FFFFFF',
+    heading: '#223A44',
+    body: '#4D5B58',
+    tagline: '#586661',
+    divider: '#D9D0C7',
+    inputBorder: '#D9CFD4',
+    placeholder: '#766C70',
+    loginLink: '#7D245E',
+    selectionSummary: '#F0EDE6',
+    heroPlaceholder: '#E9E1D7',
+    disabled: '#E8E2DE',
+    disabledText: '#5E5752',
+    error: '#B4232D',
+  },
+
   protegida: {
     primary: '#F777B6',
     primaryDark: '#CF2B9D',
+    authAccent: '#A92E5B',
+    authAccentDark: '#7D245E',
+    authSurface: '#FFF1F4',
 
     background: '#FFF0F3',
 
@@ -37,6 +57,9 @@ export const colors = {
   guardiao: {
     primary: '#4E899A',
     primaryDark: '#223A44',
+    authAccent: '#4E899A',
+    authAccentDark: '#315F67',
+    authSurface: '#EAF5F6',
 
     background: '#FAFAFA',
     text: '#333333',
@@ -95,4 +118,12 @@ export const typography = {
   lg: 20,
   xl: 28,
   xxl: 34,
+};
+
+export const fontFamilies = {
+  body: 'JaciDMSansRegular',
+  bodyMedium: 'JaciDMSansMedium',
+  bodySemibold: 'JaciDMSansSemibold',
+  bodyBold: 'JaciDMSansBold',
+  display: 'JaciLoraSemibold',
 };

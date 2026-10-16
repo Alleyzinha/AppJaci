@@ -5,16 +5,22 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import TelaPadrao, { Botao, Cartao, Mensagem, useCoresTela } from '@/components/ui/TelaPadrao';
 import MapaLocalizacao from '@/components/ui/MapaLocalizacao';
-import { listarLocalizacoes, mensagemErro } from '@/features/protecao/api/protecao.api';
+import {
+  listarLocalizacoes,
+  listarPermissoesLocalizacao,
+  salvarPermissoesLocalizacao,
+  mensagemErro,
+} from '@/features/protecao/api/protecao.api';
 import {
   iniciarCompartilhamento,
   pararCompartilhamento,
@@ -32,6 +38,22 @@ export default function LocalizacaoScreen({ perfil = 'protegida' }) {
   const [versaoMapa, recarregarMapa] = useState(0);
   const [agora, definirAgora] = useState(Date.now());
   const [erroMapa, definirErroMapa] = useState('');
+  const [guardioesPermitidos, definirGuardioesPermitidos] = useState([]);
+  const permissoes = useQuery({
+    queryKey: ['permissoes-localizacao'],
+    queryFn: listarPermissoesLocalizacao,
+    enabled: !guardiao,
+  });
+  useEffect(() => {
+    if (permissoes.data)
+      definirGuardioesPermitidos(
+        permissoes.data.filter((item) => item.permitido).map((item) => item.id),
+      );
+  }, [permissoes.data]);
+  const salvarPermissoes = useMutation({
+    mutationFn: () => salvarPermissoesLocalizacao(guardioesPermitidos.map(Number)),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['permissoes-localizacao'] }),
+  });
   const consulta = useQuery({
     queryKey: ['localizacao', perfil],
     queryFn: listarLocalizacoes,
@@ -180,6 +202,49 @@ export default function LocalizacaoScreen({ perfil = 'protegida' }) {
         }
       />
       {consulta.isPending && <Mensagem texto="Buscando as posições da sua rede…" />}
+      {!guardiao && (
+        <Cartao>
+          <Text style={[s.titulo, { color: cores.texto }]}>Quem pode ver sua localização</Text>
+          <Mensagem texto="Escolha quais guardiões vinculados podem consultar sua posição quando o compartilhamento estiver ativo." />
+          {permissoes.isPending && <Mensagem texto="Carregando sua rede…" />}
+          <Mensagem erro texto={permissoes.error && mensagemErro(permissoes.error)} />
+          {!permissoes.isPending && permissoes.data?.length === 0 && (
+            <Mensagem texto="Adicione um Guardião à sua rede para escolher quem pode ver sua localização." />
+          )}
+          {permissoes.data?.map((pessoa) => {
+            const permitido = guardioesPermitidos.includes(pessoa.id);
+            return (
+              <View key={pessoa.id} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.titulo, { color: cores.texto }]}>{pessoa.nome}</Text>
+                  <Text style={[s.status, { color: cores.secundario }]}>{pessoa.email}</Text>
+                </View>
+                <Switch
+                  accessibilityLabel={`Permitir localização para ${pessoa.nome}`}
+                  value={permitido}
+                  onValueChange={(valor) =>
+                    definirGuardioesPermitidos((atuais) =>
+                      valor
+                        ? [...new Set([...atuais, pessoa.id])]
+                        : atuais.filter((id) => id !== pessoa.id),
+                    )
+                  }
+                  trackColor={{ false: cores.borda, true: cores.destaque }}
+                />
+              </View>
+            );
+          })}
+          {permissoes.data?.length > 0 && (
+            <Botao
+              titulo="Salvar permissões de localização"
+              carregando={salvarPermissoes.isPending}
+              onPress={() => salvarPermissoes.mutate()}
+            />
+          )}
+          <Mensagem texto={salvarPermissoes.isSuccess && 'Permissões atualizadas.'} />
+          <Mensagem erro texto={salvarPermissoes.error && mensagemErro(salvarPermissoes.error)} />
+        </Cartao>
+      )}
       {!consulta.isPending && !posicoes.length && (
         <Cartao>
           <Text style={[s.titulo, { color: cores.texto }]}>O mapa está pronto para vocês</Text>

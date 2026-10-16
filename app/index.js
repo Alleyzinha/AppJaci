@@ -5,13 +5,14 @@ import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 
 import { useAuthStore } from '@/stores/auth.store';
+import { colors } from '@/styles/tokens';
 
 /**
  * Rota inicial do app.
  *
  * Carrega a sessão salva e direciona
  * para a home do perfil correto, ou
- * para a tela de escolha de perfil
+ * para a tela inicial de boas-vindas
  * quando não há sessão.
  */
 
@@ -29,16 +30,16 @@ export default function Index() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#223A44',
+          backgroundColor: colors.authEntry.background,
         }}
       >
-        <ActivityIndicator size="large" color="#CF2B9D" />
+        <ActivityIndicator size="large" color={colors.common.magenta} />
       </View>
     );
   }
 
   if (!token) {
-    return <Redirect href="/(auth)/perfil" />;
+    return <Redirect href="/(auth)" />;
   }
 
   return <Redirect href={perfil === 'protegida' ? '/protegida' : '/guardiao'} />;

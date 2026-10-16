@@ -65,3 +65,6 @@ scratch/
 # Server dependencies
 server/node_modules/
 server/dist/
+
+# Local development database files
+.local-mysql-data*/

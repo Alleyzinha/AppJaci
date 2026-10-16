@@ -10,6 +10,7 @@ import {
   listarAlertas,
   registrarAlerta,
   encerrarAlerta,
+  confirmarRecebimentoSos,
   mensagemErro,
 } from '@/features/protecao/api/protecao.api';
 
@@ -26,6 +27,7 @@ export default function SosScreen({ perfil = 'protegida' }) {
   const atualizar = () => cliente.invalidateQueries({ queryKey: ['sos'] });
   const registrar = useMutation({ mutationFn: registrarAlerta, onSuccess: atualizar });
   const encerrar = useMutation({ mutationFn: encerrarAlerta, onSuccess: atualizar });
+  const reconhecer = useMutation({ mutationFn: confirmarRecebimentoSos, onSuccess: atualizar });
   async function ligar(numero) {
     try {
       await Linking.openURL(`tel:${numero}`);
@@ -74,6 +76,13 @@ export default function SosScreen({ perfil = 'protegida' }) {
         <Mensagem erro texto={erroLigacao} />
       </Cartao>
       <Text style={[styles.secao, { color: cores.texto }]}>Atalhos de ajuda</Text>
+      {!guardiao && (
+        <Botao
+          titulo="Ajuda sem internet"
+          secundario
+          onPress={() => router.push('/protegida/offline')}
+        />
+      )}
       <View style={styles.atalhos}>
         {[
           {
@@ -107,7 +116,7 @@ export default function SosScreen({ perfil = 'protegida' }) {
                 titulo: 'Acolhimento',
                 descricao: 'Conheça os caminhos de apoio',
                 icone: 'chatbubble-ellipses-outline',
-                acao: () => router.push('/protegida/chat'),
+                acao: () => router.push('/protegida/acolhimento'),
               },
         ].map((item) => (
           <Pressable
@@ -155,6 +164,7 @@ export default function SosScreen({ perfil = 'protegida' }) {
       />
       <Mensagem erro texto={consulta.error && mensagemErro(consulta.error)} />
       <Mensagem erro texto={encerrar.error && mensagemErro(encerrar.error)} />
+      <Mensagem erro texto={reconhecer.error && mensagemErro(reconhecer.error)} />
       {consulta.isPending && <Mensagem texto="Consultando alertas…" />}
       {consulta.data?.length === 0 && (
         <Cartao>
@@ -167,6 +177,18 @@ export default function SosScreen({ perfil = 'protegida' }) {
           <Mensagem
             texto={`${alerta.status === 'ativo' ? 'Alerta ativo' : 'Alerta encerrado'} · ${new Date(alerta.dataHora).toLocaleString('pt-BR')}`}
           />
+          {alerta.confirmadoEm ? (
+            <Mensagem
+              texto={`Recebido por ${alerta.guardiaoQueConfirmou || 'um guardião'} em ${new Date(alerta.confirmadoEm).toLocaleString('pt-BR')}.`}
+            />
+          ) : null}
+          {guardiao && alerta.status === 'ativo' && !alerta.confirmadoEm ? (
+            <Botao
+              titulo="Confirmar que recebi o alerta"
+              carregando={reconhecer.isPending}
+              onPress={() => reconhecer.mutate(alerta.idAlertaSos)}
+            />
+          ) : null}
           {!guardiao && alerta.status === 'ativo' && (
             <Botao
               titulo="Encerrar este alerta"

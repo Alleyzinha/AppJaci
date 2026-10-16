@@ -9,6 +9,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { queryClient } from '@/services/query/queryClient';
 import { useSegurancaStore } from '@/stores/seguranca.store';
+import { useAuthStore } from '@/stores/auth.store';
+import { registrarPush } from '@/services/notificacoes/push';
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 
 import '@/services/api/interceptors';
 
@@ -25,11 +29,39 @@ function CamuflagemGlobal() {
   return null;
 }
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+function NotificacoesGlobais() {
+  const token = useAuthStore((estado) => estado.token);
+  React.useEffect(() => {
+    if (token) void registrarPush();
+  }, [token]);
+  React.useEffect(() => {
+    const abrir = (resposta) => {
+      const tela = resposta.notification.request.content.data?.tela;
+      if (tela === '/guardiao/sos' || tela === '/guardiao/checkin') router.push(tela);
+    };
+    const inicial = Notifications.getLastNotificationResponse();
+    if (inicial) abrir(inicial);
+    const assinatura = Notifications.addNotificationResponseReceivedListener(abrir);
+    return () => assinatura.remove();
+  }, []);
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <CamuflagemGlobal />
+        <NotificacoesGlobais />
         <Stack
           screenOptions={{
             headerShown: false,

@@ -1,184 +1,197 @@
 import { StyleSheet } from 'react-native';
 
-import { radius, spacing } from '@/styles/tokens';
+import { colors, fontFamilies, radius, spacing, typography } from '@/styles/tokens';
 
 export const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
     flex: 1,
-
-    alignItems: 'center',
-
-    justifyContent: 'center',
+    backgroundColor: colors.authEntry.background,
   },
 
   content: {
+    flexGrow: 1,
     width: '100%',
+    maxWidth: 430,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
 
+  header: {
+    minHeight: 44,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
 
-    justifyContent: 'center',
+  brandName: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 30,
+    lineHeight: 36,
+    letterSpacing: -1.4,
+  },
 
-    paddingVertical: spacing.xl,
+  brandPeriod: {
+    color: colors.common.magenta,
+  },
+
+  backButton: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+  },
+
+  backText: {
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: typography.sm,
+  },
+
+  intro: {
+    marginTop: spacing.xl,
   },
 
   title: {
-    color: '#FFFFFF',
-
-    fontSize: 42,
-
-    lineHeight: 46,
-
-    fontWeight: '900',
-
-    textAlign: 'center',
-
-    textShadowColor: 'rgba(0,0,0,0.15)',
-
-    textShadowOffset: {
-      width: 0,
-
-      height: 3,
-    },
-
-    textShadowRadius: 5,
+    maxWidth: 310,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -0.8,
   },
 
   description: {
-    marginTop: spacing.xl,
-
-    color: '#FFFFFF',
-
-    fontSize: 25,
-
-    lineHeight: 36,
-
-    fontWeight: '800',
-
-    textAlign: 'center',
+    maxWidth: 320,
+    marginTop: spacing.sm,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: 15,
+    lineHeight: 22,
   },
 
   options: {
-    width: '100%',
-
-    alignItems: 'center',
-
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
+    gap: spacing.sm + 4,
   },
 
-  confirmButton: {
-    width: '78%',
-
-    height: 90,
-
-    marginTop: spacing.md,
-
+  profileOption: {
+    minHeight: 110,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.lg,
+  },
 
-    backgroundColor: '#FFAA46',
+  profileOptionUnselected: {
+    backgroundColor: colors.common.white,
+    borderWidth: 1,
+    borderColor: '#DDDCD3',
+  },
 
+  profileText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  profileTitle: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: 18,
+    lineHeight: 24,
+  },
+
+  profileDescription: {
+    marginTop: spacing.xs,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.sm,
+    lineHeight: 20,
+  },
+
+  selectedLabel: {
+    marginTop: spacing.sm,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.xs,
+  },
+
+  radio: {
+    width: 25,
+    height: 25,
+    marginTop: 2,
     alignItems: 'center',
-
     justifyContent: 'center',
-
-    shadowColor: '#000000',
-
-    shadowOffset: {
-      width: 0,
-
-      height: 6,
-    },
-
-    shadowOpacity: 0.15,
-
-    shadowRadius: 10,
-
-    elevation: 5,
+    borderRadius: radius.full,
+    borderWidth: 2,
   },
 
-  confirmButtonPressed: {
-    opacity: 0.82,
+  radioUnselected: {
+    backgroundColor: colors.common.white,
+    borderColor: '#8A9690',
   },
 
-  confirmText: {
-    color: '#FFFFFF',
+  summary: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.authEntry.selectionSummary,
+  },
 
-    fontSize: 25,
+  summaryDot: {
+    width: 8,
+    height: 8,
+    flexShrink: 0,
+    borderRadius: radius.full,
+    backgroundColor: colors.authEntry.tagline,
+  },
 
-    fontWeight: '800',
+  summaryText: {
+    flex: 1,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: 13,
+    lineHeight: 19,
+  },
 
+  summaryStrong: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodyBold,
+  },
+
+  actionSection: {
+    marginTop: spacing.lg,
+  },
+
+  actionHint: {
+    marginTop: spacing.sm,
+    color: colors.authEntry.tagline,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.xs,
+    lineHeight: 18,
     textAlign: 'center',
   },
 
-  decorations: {
-    position: 'absolute',
-
-    top: 0,
-
-    left: 0,
-
-    right: 0,
-
-    bottom: 0,
-
-    overflow: 'hidden',
+  footer: {
+    marginTop: 'auto',
+    paddingTop: spacing.xl,
+    color: colors.authEntry.tagline,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: typography.xs,
+    textAlign: 'center',
   },
 
-  flowerOne: {
-    position: 'absolute',
-
-    top: 8,
-
-    right: 20,
-
-    fontSize: 72,
-
-    color: 'rgba(255,255,255,0.28)',
-  },
-
-  flowerTwo: {
-    position: 'absolute',
-
-    top: 72,
-
-    right: 24,
-
-    fontSize: 55,
-
-    color: 'rgba(255,190,210,0.30)',
-  },
-
-  flowerThree: {
-    position: 'absolute',
-
-    top: 20,
-
-    right: 100,
-
-    fontSize: 48,
-
-    color: 'rgba(255,210,220,0.20)',
-  },
-
-  watermark: {
-    position: 'absolute',
-
-    left: 55,
-
-    bottom: 70,
-
-    color: 'rgba(255,255,255,0.30)',
-
-    fontSize: 110,
-
-    fontWeight: '700',
-
-    fontStyle: 'italic',
-
-    transform: [
-      {
-        rotate: '-8deg',
-      },
-    ],
+  pressed: {
+    opacity: 0.78,
   },
 });

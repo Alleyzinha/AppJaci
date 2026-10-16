@@ -12,7 +12,7 @@ import TelaPadrao, {
 import { mudarPin, solicitarMudancaPin } from '@/features/auth/api/auth.api';
 import { mensagemErro } from '@/features/protecao/api/protecao.api';
 
-export default function MudarPinScreen() {
+export default function MudarPinScreen({ perfil = 'protegida' }) {
   const cores = useCoresTela();
   const [codigo, definirCodigo] = useState('');
   const [pin, definirPin] = useState('');
@@ -33,6 +33,7 @@ export default function MudarPinScreen() {
 
   return (
     <TelaPadrao
+      perfil={perfil}
       titulo="Mudar PIN"
       descricao="Enviamos um código para seu e-mail para autorizar a troca."
       icone="key-outline"

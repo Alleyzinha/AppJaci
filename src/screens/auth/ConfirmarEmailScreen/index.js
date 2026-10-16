@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { LinearGradient } from 'expo-linear-gradient';
+import { colors, fontFamilies } from '@/styles/tokens';
 
 import { Ionicons } from '@expo/vector-icons';
 
@@ -16,21 +16,20 @@ import { useCadastroStore } from '@/stores/cadastro.store';
 
 import AppButton from '@/components/ui/AppButton';
 
-import { authStyles as styles } from '../authStyles';
+import { styles } from './styles';
 
 export default function ConfirmarEmailScreen() {
-  const { email, perfil } = useLocalSearchParams();
+  const { email, perfil, developmentCode } = useLocalSearchParams();
 
   const isGuardiao = perfil === 'guardiao' || (Array.isArray(perfil) && perfil[0] === 'guardiao');
 
-  const gradientColors = isGuardiao
-    ? ['#8DCFE2', '#76B3C5', '#223A44']
-    : ['#E95378', '#8B48C7', '#341E6D'];
+  const perfilCores = isGuardiao ? colors.guardiao : colors.protegida;
+  const perfilNome = isGuardiao ? 'Guardião' : 'Protegida';
+  const emailExibido = typeof email === 'string' ? email : '';
 
-  const emailExibido =
-    typeof email === 'string' && email.length > 0 ? email : 'seuemail@exemplo.com';
-
-  const [codigo, setCodigo] = useState('');
+  const codigoInicial = Array.isArray(developmentCode) ? developmentCode[0] : developmentCode;
+  const [codigo, setCodigo] = useState(codigoInicial || '');
+  const [codigoDesenvolvimento, setCodigoDesenvolvimento] = useState(codigoInicial || '');
 
   const [reenviando, setReenviando] = useState(false);
 
@@ -78,7 +77,10 @@ export default function ConfirmarEmailScreen() {
     setCodigoEnviado(false);
     setErroConfirmacao('');
     try {
-      await resendEmail({ email: emailExibido });
+      const resposta = await resendEmail({ email: emailExibido });
+      const codigoLocal = resposta.developmentCode || '';
+      setCodigoDesenvolvimento(codigoLocal);
+      if (codigoLocal) setCodigo(codigoLocal);
       setCodigoEnviado(true);
     } catch (error) {
       setErroConfirmacao(mensagemErroApi(error, 'Não foi possível reenviar o código.'));
@@ -96,170 +98,117 @@ export default function ConfirmarEmailScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={gradientColors}
-
-      start={{
-        x: 0,
-        y: 0,
-      }}
-
-      end={{
-        x: 1,
-        y: 1,
-      }}
-
-      style={styles.container}
-    >
-      <View style={styles.glowTopRight} pointerEvents="none" />
-
-      <View style={styles.glowBottomLeft} pointerEvents="none" />
-
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          automaticallyAdjustKeyboardInsets
-          contentContainerStyle={styles.scrollContent}
-
-          showsVerticalScrollIndicator={false}
-
-          keyboardShouldPersistTaps="handled"
-
-          bounces={false}
-
-          overScrollMode="never"
-
-          style={{
-            overscrollBehavior: 'none',
-          }}
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+        overScrollMode="never"
+      >
+        <View style={styles.header}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={handleBack}
+            hitSlop={8}
+            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.authEntry.heading} />
+          </Pressable>
+          <Text accessibilityLabel="Jaci" style={styles.brandName}>
+            jaci<Text style={styles.brandPeriod}>.</Text>
+          </Text>
+          <Text style={[styles.profileLabel, { color: perfilCores.authAccentDark }]}>
+            {perfilNome}
+          </Text>
+        </View>
+        <View style={styles.intro}>
+          <Text accessibilityRole="header" style={styles.title}>
+            Confirme seu e-mail
+          </Text>
+          <Text style={styles.subtitle}>Enviamos um código de verificação para</Text>
+          <Text style={[styles.email, { color: perfilCores.authAccentDark }]}>{emailExibido}</Text>
+        </View>
+        <Text
+          style={[
+            styles.confirmationHint,
+            { backgroundColor: perfilCores.authSurface, color: perfilCores.authAccentDark },
+          ]}
         >
-          {/* BOTÃO DE VOLTAR */}
-
-          <View style={styles.topNavigation}>
-            <Pressable
-              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-
-              onPress={handleBack}
-
-              hitSlop={8}
+          Digite o código de seis números recebido por e-mail para continuar seu cadastro.
+        </Text>
+        {codigoDesenvolvimento ? (
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[
+              styles.confirmationHint,
+              { backgroundColor: perfilCores.authSurface, color: perfilCores.authAccentDark },
+            ]}
+          >
+            Código local de desenvolvimento: {codigoDesenvolvimento}
+          </Text>
+        ) : null}
+        <View style={styles.codeSection}>
+          <Text style={styles.pinLabel}>Código de verificação</Text>
+          <TextInput
+            accessibilityLabel="Código de verificação de seis dígitos"
+            style={[styles.codeInput, { borderColor: perfilCores.authAccent }]}
+            placeholder="000000"
+            placeholderTextColor={colors.authEntry.placeholder}
+            value={codigo}
+            onChangeText={handleCodigoChange}
+            keyboardType="number-pad"
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
+            maxLength={6}
+            editable={!confirmando}
+            onSubmitEditing={handleConfirmar}
+          />
+          {codigoEnviado ? (
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[styles.feedback, { color: perfilCores.authAccentDark }]}
             >
-              <Ionicons
-                name="arrow-back"
-
-                size={23}
-
-                color="#FFFFFF"
-              />
-            </Pressable>
-          </View>
-
-          <View style={styles.mainWrapper}>
-            {/* INDICADOR DE PASSO */}
-
-            <View style={styles.stepHeader}>
-              <View style={styles.stepBadge}>
-                <Text style={styles.stepBadgeText}>PASSO 03 DE 03</Text>
-              </View>
-
-              <View style={styles.stepBarBackground}>
-                <View style={styles.stepBarFillFull} />
-              </View>
-            </View>
-
-            {/* CABEÇALHO */}
-
-            <View style={styles.headerGroup}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="mail" size={32} color="#FFD000" />
-              </View>
-
-              <Text style={styles.titulo}>CONFIRME SEU E-MAIL</Text>
-
-              <Text style={styles.subtitulo}>Enviamos um código de verificação para</Text>
-
-              <Text style={styles.emailDestaque}>{emailExibido}</Text>
-            </View>
-
-            {/* CAMPO CÓDIGO */}
-
-            <View style={styles.formGroup}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>CÓDIGO DE VERIFICAÇÃO</Text>
-
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.inputCodigo}
-
-                    placeholder="••••••"
-
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-
-                    value={codigo}
-
-                    onChangeText={handleCodigoChange}
-
-                    keyboardType="number-pad"
-
-                    maxLength={6}
-                  />
-                </View>
-              </View>
-
-              {/* FEEDBACK DE REENVIO */}
-
-              {codigoEnviado && (
-                <View style={styles.feedbackContainer}>
-                  <Ionicons name="checkmark-circle" size={16} color="#FFD000" />
-
-                  <Text
-                    style={[
-                      styles.feedbackText,
-                      {
-                        color: '#FFD000',
-                      },
-                    ]}
-                  >
-                    Código reenviado com sucesso!
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* BOTÕES */}
-
-            <View style={styles.footerGroup}>
-              {erroConfirmacao ? (
-                <Text accessibilityRole="alert" style={styles.invalidText}>
-                  {erroConfirmacao}
+              Código reenviado com sucesso!
+            </Text>
+          ) : null}
+          {erroConfirmacao ? (
+            <Text accessibilityRole="alert" style={styles.errorText}>
+              {erroConfirmacao}
+            </Text>
+          ) : null}
+        </View>
+        <View style={styles.footer}>
+          <AppButton
+            title="Confirmar e-mail"
+            loading={confirmando}
+            disabled={!formularioValido}
+            fontFamily={fontFamilies.bodyBold}
+            colors={[perfilCores.authAccentDark, perfilCores.authAccentDark]}
+            disabledColors={[colors.authEntry.disabled, colors.authEntry.disabled]}
+            textColor={colors.common.white}
+            disabledTextColor={colors.authEntry.disabledText}
+            onPress={handleConfirmar}
+          />
+          <Pressable
+            accessibilityRole="button"
+            disabled={reenviando || confirmando}
+            onPress={handleReenviar}
+            style={({ pressed }) => [styles.resend, pressed && styles.pressed]}
+          >
+            <Text style={styles.resendText}>
+              {reenviando ? 'Enviando...' : 'Não recebeu o código? '}
+              {!reenviando ? (
+                <Text style={[styles.resendEmphasis, { color: perfilCores.authAccentDark }]}>
+                  Reenviar
                 </Text>
               ) : null}
-              <View style={styles.buttonContainer}>
-                <AppButton
-                  title="Confirmar"
-                  loading={confirmando}
-
-                  disabled={!formularioValido}
-
-                  onPress={handleConfirmar}
-                />
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [styles.reenviarLink, pressed && styles.pressed]}
-
-                onPress={handleReenviar}
-
-                disabled={reenviando}
-              >
-                <Text style={styles.reenviarText}>
-                  {reenviando ? 'Enviando...' : 'Não recebeu o código? '}
-
-                  {!reenviando && <Text style={styles.reenviarBold}>Reenviar</Text>}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

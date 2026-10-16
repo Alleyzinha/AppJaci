@@ -1,13 +1,11 @@
 import { StyleSheet } from 'react-native';
 
+import { colors, fontFamilies, radius, spacing, typography } from '@/styles/tokens';
+
 export const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
     flex: 1,
-  },
-
-  safeArea: {
-    flex: 1,
+    backgroundColor: colors.authEntry.background,
   },
 
   keyboard: {
@@ -16,141 +14,119 @@ export const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 26,
-    paddingBottom: 40,
-    justifyContent: 'center',
-  },
-
-  glowTopRight: {
-    position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-  },
-
-  glowBottomLeft: {
-    position: 'absolute',
-    bottom: -80,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: 'rgba(139, 72, 199, 0.25)',
-  },
-
-  topNavigation: {
     width: '100%',
-    maxWidth: 520,
+    maxWidth: 430,
     alignSelf: 'center',
-    paddingTop: 24,
-    paddingBottom: 12,
-    alignItems: 'flex-start',
+    paddingHorizontal: spacing.md + spacing.xs,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+
+  header: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-
-  pressed: {
-    opacity: 0.8,
-  },
-
-  mainWrapper: {
-    width: '100%',
-    maxWidth: 520,
-    alignSelf: 'center',
-    gap: 20,
-    marginTop: 0,
-    paddingVertical: 24,
-    paddingHorizontal: 28,
-    borderRadius: 28,
-    backgroundColor: 'rgba(52, 30, 109, 0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-  },
-
-  // INDICADOR DE PASSO
-  stepHeader: {
-    alignItems: 'center',
-    gap: 8,
-  },
-
-  stepBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    paddingVertical: 5,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-
-  stepBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-  },
-
-  stepBarBackground: {
-    width: 120,
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-
-  stepBarFill: {
-    height: '100%',
-    backgroundColor: '#FFD000',
-    borderRadius: 2,
-  },
-
-  headerGroup: {
-    alignItems: 'center',
-  },
-
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.authEntry.divider,
+    backgroundColor: colors.authEntry.surface,
   },
 
-  titulo: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 1,
+  brandName: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 24,
+    lineHeight: 30,
+    letterSpacing: -1.2,
   },
 
-  subtitulo: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 15,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 10,
+  brandPeriod: {
+    color: colors.common.magenta,
+  },
+
+  intro: {
+    marginTop: spacing.md,
+  },
+
+  profileLabel: {
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.sm,
     lineHeight: 20,
   },
 
-  formGroup: {
-    width: '100%',
-    gap: 14,
+  title: {
+    marginTop: spacing.xs,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 31,
+    lineHeight: 36,
+    letterSpacing: -0.8,
+  },
+
+  description: {
+    maxWidth: 340,
+    marginTop: spacing.sm,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.sm,
+    lineHeight: 21,
+  },
+
+  loginPrompt: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+
+  loginPromptText: {
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.sm,
+  },
+
+  loginLinkButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+
+  loginLink: {
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: typography.sm,
+    textDecorationLine: 'underline',
+  },
+
+  form: {
+    marginTop: spacing.md,
+    gap: spacing.md,
+  },
+
+  contactGroup: {
+    gap: spacing.sm + 4,
+  },
+
+  passwordGroup: {
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.authEntry.divider,
+  },
+
+  groupTitle: {
+    marginBottom: spacing.xs,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: 15,
+    lineHeight: 21,
   },
 
   inputContainer: {
@@ -158,80 +134,127 @@ export const styles = StyleSheet.create({
   },
 
   label: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginLeft: 4,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: 13,
+    lineHeight: 18,
   },
 
   inputWrapper: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 16,
-    minHeight: 56,
-    paddingVertical: 10,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.authEntry.inputBorder,
+    borderRadius: 11,
+    backgroundColor: colors.common.white,
   },
 
-  inputError: {
-    borderColor: '#FF5A5A',
-  },
-
-  inputIcon: {
-    marginRight: 10,
+  inputWrapperError: {
+    borderWidth: 2,
+    borderColor: colors.authEntry.error,
   },
 
   input: {
     minWidth: 0,
-    paddingVertical: 12,
     flex: 1,
-    color: '#FFFFFF',
-    fontSize: 16,
+    paddingVertical: spacing.sm,
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.body,
+    fontSize: 15,
+    includeFontPadding: false,
   },
 
-  eyeIcon: {
-    padding: 6,
-  },
-
-  feedbackText: {
-    fontSize: 13,
-    marginLeft: 4,
-  },
-
-  validText: {
-    color: '#CFF5E7',
-  },
-
-  invalidText: {
-    color: '#FFB3B3',
-  },
-
-  footerGroup: {
-    width: '100%',
+  eyeButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    gap: 16,
-    marginTop: 8,
+    justifyContent: 'center',
   },
 
-  buttonContainer: {
-    width: '100%',
+  errorText: {
+    marginTop: 2,
+    color: colors.authEntry.error,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: typography.xs,
+    lineHeight: 18,
   },
 
-  cadastroLink: {
-    paddingVertical: 6,
+  successText: {
+    marginTop: 2,
+    color: colors.common.success,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: typography.xs,
+    lineHeight: 18,
   },
 
-  cadastroText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
+  passwordRequirements: {
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.md,
   },
 
-  cadastroBold: {
-    color: '#FFD000',
-    fontWeight: '700',
+  passwordRequirementsTitle: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+
+  passwordRequirementsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs + 2,
+    marginTop: spacing.sm,
+  },
+
+  passwordRule: {
+    minWidth: '47%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+  },
+
+  passwordRuleText: {
+    flex: 1,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  passwordRuleTextMet: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodySemibold,
+  },
+
+  serverError: {
+    color: colors.authEntry.error,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: typography.sm,
+    lineHeight: 20,
+  },
+
+  nextStep: {
+    marginTop: -spacing.sm,
+    color: colors.authEntry.tagline,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.xs,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+
+  footer: {
+    marginTop: spacing.lg,
+    color: colors.authEntry.tagline,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.xs,
+    textAlign: 'center',
+  },
+
+  pressed: {
+    opacity: 0.72,
   },
 });

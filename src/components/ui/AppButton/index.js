@@ -1,31 +1,44 @@
 import React, { memo } from 'react';
 
-import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { styles } from './styles';
 
 const AppButton = memo(
-  ({ title, loading = false, colors = ['#FFD35A', '#FF914D'], disabled = false, onPress }) => {
+  ({
+    title,
+    loading = false,
+    loadingLabel,
+    colors = ['#FFD35A', '#FF914D'],
+    disabledColors,
+    textColor = '#FFFFFF',
+    disabledTextColor = textColor,
+    fontFamily,
+    disabled = false,
+    accessibilityHint,
+    onPress,
+  }) => {
     const isDisabled = disabled || loading;
+    const buttonColors = isDisabled && disabledColors ? disabledColors : colors;
 
     return (
       <Pressable
         disabled={isDisabled}
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={title}
+        accessibilityLabel={loading ? loadingLabel || `${title}...` : title}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
         style={({ pressed }) => [
           styles.container,
-
           pressed && styles.pressed,
-
-          isDisabled && styles.disabled,
+          isDisabled && !disabledColors && styles.disabled,
         ]}
       >
         <LinearGradient
-          colors={colors}
+          colors={buttonColors}
           start={{
             x: 0,
             y: 0,
@@ -37,9 +50,35 @@ const AppButton = memo(
           style={styles.gradient}
         >
           {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
+            loadingLabel ? (
+              <View style={styles.loadingContent}>
+                <ActivityIndicator
+                  color={isDisabled ? disabledTextColor : textColor}
+                  size="small"
+                />
+                <Text
+                  style={[
+                    styles.text,
+                    fontFamily && { fontFamily },
+                    { color: isDisabled ? disabledTextColor : textColor },
+                  ]}
+                >
+                  {loadingLabel}
+                </Text>
+              </View>
+            ) : (
+              <ActivityIndicator color={textColor} />
+            )
           ) : (
-            <Text style={styles.text}>{title}</Text>
+            <Text
+              style={[
+                styles.text,
+                fontFamily && { fontFamily },
+                { color: isDisabled ? disabledTextColor : textColor },
+              ]}
+            >
+              {title}
+            </Text>
           )}
         </LinearGradient>
       </Pressable>

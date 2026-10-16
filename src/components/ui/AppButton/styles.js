@@ -43,6 +43,13 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
+  loadingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+
   pressed: {
     transform: [
       {

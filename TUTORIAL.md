@@ -1,6 +1,7 @@
 # AppJaci — Tutorial de Setup
 
 ## Pré-requisitos
+
 - Windows 10/11
 - Node.js 18+
 - Docker Desktop (para MySQL)
@@ -33,11 +34,13 @@ npm run web
 ```
 
 ## Configurações
+
 - Abra `server\.env` — configure `DB_PASSWORD` e `JWT_SECRET`
 - A API roda em `http://localhost:8080`
 - O Expo web abre automaticamente no navegador
 
 ## Estrutura
+
 ```
 AppJaci/
 ├── app/                 # Rotas (Expo Router)

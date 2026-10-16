@@ -2,6 +2,7 @@ import { queryClient } from '@/services/query/queryClient';
 import { create } from 'zustand';
 import { clearSession, getSession, saveSession } from '@/services/storage/secureStorage';
 import { pararCompartilhamento } from '@/services/localizacao/compartilhamento';
+import { removerRegistroPush } from '@/services/notificacoes/push';
 
 type Perfil = 'protegida' | 'guardiao' | null;
 
@@ -68,6 +69,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
+    await removerRegistroPush().catch(() => {});
     // Revoga o envio antes de apagar as credenciais usadas para removê-lo.
     await pararCompartilhamento().catch(() => {});
     await queryClient.cancelQueries();

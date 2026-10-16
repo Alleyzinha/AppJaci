@@ -3,160 +3,210 @@ import React, { useState } from 'react';
 
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { LinearGradient } from 'expo-linear-gradient';
-
 import { Ionicons } from '@expo/vector-icons';
-
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 import AppButton from '@/components/ui/AppButton';
+import { colors, fontFamilies } from '@/styles/tokens';
 
-import { authStyles as styles } from '../authStyles';
+import { styles } from './styles';
+
+const PERFIS = [
+  {
+    id: 'protegida',
+    title: 'Protegida',
+    description: 'Busque apoio e compartilhe com sua rede de confiança.',
+  },
+  {
+    id: 'guardiao',
+    title: 'Guardião',
+    description: 'Receba alertas e esteja por perto para oferecer apoio.',
+  },
+];
+
+const CORES_PERFIL = {
+  protegida: colors.protegida,
+  guardiao: colors.guardiao,
+};
 
 export default function EscolhaPerfilScreen() {
+  const { intent, email } = useLocalSearchParams();
+  const intentParam = Array.isArray(intent) ? intent[0] : intent;
+  const fluxoLogin = intentParam === 'login';
+  const emailParam = typeof email === 'string' ? email : '';
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
+  const perfil = PERFIS.find((item) => item.id === perfilSelecionado);
+  const corPerfil = perfilSelecionado ? CORES_PERFIL[perfilSelecionado] : null;
 
-  const handleConfirmar = () => {
+  const handleContinuar = () => {
     if (!perfilSelecionado) return;
 
-    if (perfilSelecionado === 'PROTEGIDA') {
-      router.push('/(auth)/cadastro?perfil=protegida');
-    } else if (perfilSelecionado === 'GUARDIAO') {
-      router.push('/(auth)/cadastro?perfil=guardiao');
+    if (fluxoLogin) {
+      router.replace({
+        pathname: '/(auth)/login',
+        params: { perfil: perfilSelecionado, ...(emailParam ? { email: emailParam } : {}) },
+      });
+      return;
     }
+
+    router.push({
+      pathname: '/(auth)/cadastro',
+      params: { perfil: perfilSelecionado },
+    });
   };
 
-  const renderCard = (id, iconName, title, sub) => {
-    const selecionado = perfilSelecionado === id;
-
-    return (
-      <Pressable
-        onPress={() => setPerfilSelecionado(id)}
-
-        style={({ pressed }) => [
-          styles.card,
-          selecionado && styles.cardSelecionado,
-          pressed && styles.cardPressionado,
-        ]}
-      >
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name={iconName}
-
-            size={26}
-
-            color={selecionado ? '#FFD000' : '#FFFFFF'}
-          />
-        </View>
-
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardTitle}>{title}</Text>
-
-          <Text style={styles.cardSub}>{sub}</Text>
-        </View>
-
-        <View style={styles.checkArea}>
-          {selecionado ? (
-            <Ionicons name="checkmark-circle" size={24} color="#FFD000" />
-          ) : (
-            <View style={styles.radioOutline} />
-          )}
-        </View>
-      </Pressable>
-    );
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(auth)');
   };
 
   return (
-    <LinearGradient
-      colors={['#E95378', '#8B48C7', '#341E6D']}
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+        overScrollMode="never"
+      >
+        <View style={styles.header}>
+          <Text accessibilityLabel="Jaci" style={styles.brandName}>
+            jaci<Text style={styles.brandPeriod}>.</Text>
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={handleBack}
+            hitSlop={8}
+            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          >
+            <Ionicons name="arrow-back" size={19} color={colors.authEntry.heading} />
+            <Text style={styles.backText}>Voltar</Text>
+          </Pressable>
+        </View>
 
-      start={{
-        x: 0,
-        y: 0,
-      }}
+        <View style={styles.intro}>
+          <Text accessibilityRole="header" style={styles.title}>
+            {fluxoLogin ? 'Como você acessa a Jaci?' : 'Como você vai usar a Jaci?'}
+          </Text>
+          <Text style={styles.description}>
+            {fluxoLogin
+              ? 'Escolha o perfil vinculado à sua conta.'
+              : 'Escolha o perfil da conta que você vai criar.'}
+          </Text>
+        </View>
 
-      end={{
-        x: 1,
-        y: 1,
-      }}
-
-      style={styles.container}
-    >
-      <View style={styles.glowTopRight} pointerEvents="none" />
-
-      <View style={styles.glowBottomLeft} pointerEvents="none" />
-
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-
-          showsVerticalScrollIndicator={false}
-
-          keyboardShouldPersistTaps="handled"
-
-          bounces={false}
-
-          overScrollMode="never"
-
-          style={{
-            overscrollBehavior: 'none',
-          }}
+        <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel="Escolha de perfil"
+          style={styles.options}
         >
-          <View style={styles.mainWrapper}>
-            {/* INDICADOR DE PASSO */}
+          {PERFIS.map((item) => {
+            const selecionado = perfilSelecionado === item.id;
+            const paleta = CORES_PERFIL[item.id];
 
-            <View style={styles.stepHeader}>
-              <View style={styles.stepBadge}>
-                <Text style={styles.stepBadgeText}>PASSO 01 DE 03</Text>
-              </View>
+            return (
+              <Pressable
+                key={item.id}
+                accessibilityRole="radio"
+                accessibilityLabel={`${item.title}. ${item.description}`}
+                accessibilityHint={
+                  selecionado ? 'Perfil selecionado' : 'Toque duas vezes para selecionar'
+                }
+                accessibilityState={{ selected: selecionado }}
+                onPress={() => setPerfilSelecionado(item.id)}
+                style={({ pressed }) => [
+                  styles.profileOption,
+                  selecionado
+                    ? {
+                        backgroundColor: paleta.authSurface,
+                        borderColor: paleta.authAccent,
+                        borderWidth: 2,
+                      }
+                    : styles.profileOptionUnselected,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={styles.profileText}>
+                  <Text
+                    style={[styles.profileTitle, selecionado && { color: paleta.authAccentDark }]}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text style={styles.profileDescription}>{item.description}</Text>
+                  {selecionado && (
+                    <Text style={[styles.selectedLabel, { color: paleta.authAccentDark }]}>
+                      Perfil selecionado
+                    </Text>
+                  )}
+                </View>
+                <View
+                  accessible={false}
+                  style={[
+                    styles.radio,
+                    selecionado
+                      ? { borderColor: paleta.authAccent, backgroundColor: paleta.authAccent }
+                      : styles.radioUnselected,
+                  ]}
+                >
+                  {selecionado ? (
+                    <Ionicons name="checkmark" size={16} color={colors.common.white} />
+                  ) : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
 
-              <View style={styles.stepBarBackground}>
-                <View style={styles.stepBarFill} />
-              </View>
-            </View>
+        <View style={styles.summary} accessibilityLiveRegion="polite">
+          <View
+            accessible={false}
+            style={[styles.summaryDot, corPerfil && { backgroundColor: corPerfil.authAccent }]}
+          />
+          <Text style={styles.summaryText}>
+            {perfil ? (
+              <>
+                Seu perfil é <Text style={styles.summaryStrong}>{perfil.title}</Text>. Próxima
+                etapa: {fluxoLogin ? 'entrar na conta.' : 'criar uma conta.'}
+              </>
+            ) : (
+              'Selecione seu perfil para continuar.'
+            )}
+          </Text>
+        </View>
 
-            {/* CABEÇALHO */}
+        <View style={styles.actionSection}>
+          <AppButton
+            title={
+              perfil
+                ? `${fluxoLogin ? 'Entrar' : 'Criar conta'} como ${perfil.title}`
+                : fluxoLogin
+                  ? 'Escolher perfil para entrar'
+                  : 'Escolher perfil para criar conta'
+            }
+            disabled={!perfil}
+            fontFamily={fontFamilies.bodyBold}
+            colors={[
+              corPerfil ? corPerfil.authAccentDark : colors.authEntry.heading,
+              corPerfil ? corPerfil.authAccentDark : colors.authEntry.heading,
+            ]}
+            disabledColors={[colors.authEntry.disabled, colors.authEntry.disabled]}
+            disabledTextColor={colors.authEntry.disabledText}
+            textColor={colors.common.white}
+            onPress={handleContinuar}
+          />
+          <Text style={styles.actionHint}>
+            {fluxoLogin
+              ? 'Você pode trocar de perfil depois.'
+              : 'A próxima etapa são seus dados de cadastro.'}
+          </Text>
+        </View>
 
-            <View style={styles.headerGroup}>
-              <Text style={styles.titulo}>ESCOLHA SEU PERFIL</Text>
-
-              <Text style={styles.subtitulo}>Como você deseja acessar a plataforma Jaci?</Text>
-            </View>
-
-            {/* CARDS DE PERFIL */}
-
-            <View style={styles.cardsGroup}>
-              {renderCard(
-                'PROTEGIDA',
-                'shield-checkmark-outline',
-                'PROTEGIDA',
-                'Acesso seguro e rede de apoio instantânea',
-              )}
-
-              {renderCard(
-                'GUARDIAO',
-                'people-outline',
-                'GUARDIÃO',
-                'Receba alertas e ofereça suporte imediato',
-              )}
-            </View>
-
-            {/* BOTÃO DE CONFIRMAÇÃO */}
-
-            <View style={styles.footerGroup}>
-              <View style={styles.buttonContainer}>
-                <AppButton
-                  title="Confirmar escolha"
-
-                  disabled={!perfilSelecionado}
-
-                  onPress={handleConfirmar}
-                />
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+        <Text style={styles.footer}>Cuidado que conecta</Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

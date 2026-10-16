@@ -1,217 +1,200 @@
 import { StyleSheet } from 'react-native';
 
+import { colors, fontFamilies, radius, spacing, typography } from '@/styles/tokens';
+
 export const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
     flex: 1,
-  },
-
-  safeArea: {
-    flex: 1,
-  },
-
-  keyboard: {
-    flex: 1,
+    backgroundColor: colors.authEntry.background,
   },
 
   scrollContent: {
-    width: '100%',
-    maxWidth: 520,
-    alignSelf: 'center',
     flexGrow: 1,
-    paddingHorizontal: 26,
-    paddingBottom: 40,
-    justifyContent: 'flex-start',
-  },
-
-  glowTopRight: {
-    position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-  },
-
-  glowBottomLeft: {
-    position: 'absolute',
-    bottom: -80,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: 'rgba(139, 72, 199, 0.25)',
-  },
-
-  topNavigation: {
     width: '100%',
-    paddingTop: 20,
-    paddingBottom: 20,
-    alignItems: 'flex-start',
+    maxWidth: 430,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+
+  header: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
+    width: 44,
+    height: 44,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: colors.authEntry.divider,
+    backgroundColor: colors.authEntry.surface,
   },
 
-  pressed: {
-    opacity: 0.8,
+  brandName: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 23,
+    lineHeight: 30,
+    letterSpacing: -1.2,
   },
 
-  mainWrapper: {
-    width: '100%',
-    gap: 12,
-    marginTop: 10,
+  brandPeriod: {
+    color: colors.common.magenta,
   },
 
-  headerGroup: {
-    alignItems: 'center',
+  profileLabel: {
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.xs,
   },
 
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+  intro: {
+    marginTop: spacing.lg,
   },
 
-  titulo: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 1,
+  title: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.display,
+    fontSize: 29,
+    lineHeight: 35,
+    letterSpacing: -0.9,
   },
 
-  subtitulo: {
-    color: 'rgba(255, 255, 255, 0.9)',
+  subtitle: {
+    marginTop: spacing.xs,
+    color: colors.authEntry.body,
+    fontFamily: fontFamilies.body,
     fontSize: 15,
-    textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 10,
+    lineHeight: 22,
+  },
+
+  confirmationHint: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    borderRadius: radius.md,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.sm,
     lineHeight: 20,
+  },
+
+  pinSection: {
+    marginTop: spacing.md,
+  },
+
+  pinCountRow: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+
+  pinLabel: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.sm,
+  },
+
+  pinCount: {
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: typography.sm,
   },
 
   pinContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 10,
-  },
-
-  pinCircle: {
-    width: '18%',
-    maxWidth: 52,
-    aspectRatio: 1,
-    borderRadius: 26,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
 
-  pinCirclePreenchido: {
-    borderColor: '#FFD000',
-    backgroundColor: 'rgba(255, 208, 0, 0.15)',
+  pinSlot: {
+    width: 58,
+    height: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.authEntry.divider,
+    borderRadius: 17,
+    backgroundColor: colors.authEntry.surface,
   },
 
   pinDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FFD000',
+    width: 13,
+    height: 13,
+    borderRadius: radius.full,
   },
 
   keypadContainer: {
+    width: '100%',
+    maxWidth: 280,
+    alignSelf: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    width: '100%',
-    maxWidth: 300,
-    alignSelf: 'center',
-    marginTop: 10,
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
 
   keypadKey: {
-    width: '31%',
-    minHeight: 56,
-    paddingVertical: 10,
-    margin: '1%',
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    width: 76,
+    height: 58,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  keypadKeyVazio: {
-    width: '31%',
-    minHeight: 56,
-    paddingVertical: 10,
-    margin: '1%',
-  },
-
-  keypadKeyPressionado: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-
-  keypadText: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '600',
+    borderRadius: 18,
+    backgroundColor: colors.authEntry.surface,
   },
 
   keypadDelete: {
-    color: '#FFD000',
-    fontSize: 28,
-    fontWeight: '600',
-  },
-
-  footerGroup: {
-    width: '100%',
-    marginTop: 10,
-  },
-
-  continuarButton: {
-    width: '100%',
-    minHeight: 54,
-    paddingVertical: 10,
-    borderRadius: 16,
-    backgroundColor: '#FFD000',
+    width: 76,
+    height: 58,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 18,
   },
 
-  continuarButtonPressed: {
-    opacity: 0.8,
+  keypadSpacer: {
+    width: 76,
+    height: 58,
   },
 
-  continuarButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  keypadText: {
+    color: colors.authEntry.heading,
+    fontFamily: fontFamilies.bodySemibold,
+    fontSize: 23,
+    lineHeight: 30,
   },
 
-  continuarButtonText: {
-    color: '#341E6D',
-    fontSize: 16,
-    fontWeight: '700',
+  keypadPressed: {
+    backgroundColor: colors.authEntry.selectionSummary,
+    transform: [{ scale: 0.96 }],
   },
 
-  continuarButtonTextDisabled: {
-    color: 'rgba(255, 255, 255, 0.4)',
+  keypadDisabled: {
+    opacity: 0.55,
+  },
+
+  footer: {
+    marginTop: 'auto',
+    paddingTop: spacing.lg,
+  },
+
+  pinHint: {
+    minHeight: 20,
+    marginTop: spacing.sm,
+    color: colors.authEntry.tagline,
+    fontFamily: fontFamilies.body,
+    fontSize: typography.xs,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+
+  pressed: {
+    opacity: 0.72,
   },
 });

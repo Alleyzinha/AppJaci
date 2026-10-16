@@ -11,59 +11,41 @@ import {
   View,
 } from 'react-native';
 
-import { LinearGradient } from 'expo-linear-gradient';
-
 import { Ionicons } from '@expo/vector-icons';
-
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 
 import { Controller, useForm } from 'react-hook-form';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import AppButton from '@/components/ui/AppButton';
-
 import { useLogin } from '@/features/auth/hooks/useLogin';
-
 import { loginSchema } from '@/features/auth/schemas/login.schema';
-
-import { useAuthStore } from '@/stores/auth.store';
 import { mensagemErroApi } from '@/services/api/api';
+import { useAuthStore } from '@/stores/auth.store';
+import { colors, fontFamilies } from '@/styles/tokens';
 
 import { styles } from './styles';
 
+function normalizarPerfil(perfil) {
+  const value = Array.isArray(perfil) ? perfil[0] : perfil;
+  return value === 'protegida' || value === 'guardiao' ? value : null;
+}
+
+function normalizarEmail(email) {
+  return typeof email === 'string' ? email : Array.isArray(email) ? email[0] || '' : '';
+}
+
 export default function LoginScreen() {
-  /*
-   * Recupera o perfil enviado pela
-   * tela de escolha de perfil.
-   */
-
-  const { perfil } = useLocalSearchParams();
-
-  const perfilSelecionado = Array.isArray(perfil) ? perfil[0] : perfil;
-
+  const params = useLocalSearchParams();
+  const perfilSelecionado = normalizarPerfil(params.perfil);
   const isProtegida = perfilSelecionado === 'protegida';
-
-  /*
-   * Textos e ícone por perfil.
-   */
-
-  const titulo = isProtegida ? 'BEM-VINDA PROTEGIDA' : 'BEM-VINDO GUARDIÃO';
-
-  const subtitulo = isProtegida
-    ? 'Faça login para acessar sua conta'
-    : 'Faça login para acessar sua conta';
-
-  const headerIcon = isProtegida ? 'shield-checkmark' : 'people-circle';
-
-  const gradientColors = isProtegida
-    ? ['#E95378', '#8B48C7', '#341E6D']
-    : ['#8DCFE2', '#76B3C5', '#223A44'];
-
+  const perfilNome = isProtegida ? 'Protegida' : 'Guardião';
+  const perfilCores = isProtegida ? colors.protegida : colors.guardiao;
+  const emailInicial = normalizarEmail(params.email);
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [campoFocado, setCampoFocado] = useState(null);
 
   const signIn = useAuthStore((state) => state.signIn);
-
   const loginMutation = useLogin();
 
   const {
@@ -71,26 +53,37 @@ export default function LoginScreen() {
     handleSubmit,
     formState: { errors },
     setError,
-    watch,
+    getValues,
+    setFocus,
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      email: emailInicial,
       password: '',
     },
   });
 
-  const email = watch('email');
-  const password = watch('password');
+  if (!perfilSelecionado) {
+    return <Redirect href="/(auth)/perfil?intent=login" />;
+  }
 
   const handleLogin = async (data) => {
     try {
       const response = await loginMutation.mutateAsync({
         email: data.email,
         password: data.password,
+        profile: perfilSelecionado,
       });
 
-      // Salva a sessão
+      if (response.user.profile !== perfilSelecionado) {
+        setError('password', {
+          type: 'server',
+          message:
+            'Esta conta está cadastrada em outro perfil. Toque em “Trocar perfil” para entrar.',
+        });
+        return;
+      }
+
       await signIn({
         token: response.accessToken,
         perfil: response.user.profile,
@@ -111,18 +104,21 @@ export default function LoginScreen() {
     }
   };
 
-  /*
-   * Cadastro deve preservar
-   * o perfil selecionado.
-   */
+  const handleTrocarPerfil = () => {
+    const emailAtual = getValues('email');
+    router.push({
+      pathname: '/(auth)/perfil',
+      params: {
+        intent: 'login',
+        ...(emailAtual ? { email: emailAtual } : {}),
+      },
+    });
+  };
 
   const handleCadastro = () => {
     router.push({
       pathname: '/(auth)/cadastro',
-
-      params: {
-        perfil: isProtegida ? 'protegida' : 'guardiao',
-      },
+      params: { perfil: perfilSelecionado },
     });
   };
 
@@ -130,247 +126,210 @@ export default function LoginScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(auth)/perfil');
+      router.replace('/(auth)');
     }
   };
 
+  const getInputWrapperStyle = (name, hasError) => [
+    styles.inputWrapper,
+    campoFocado === name && [styles.inputWrapperFocused, { borderColor: perfilCores.authAccent }],
+    hasError && styles.inputWrapperError,
+  ];
+
   return (
-    <LinearGradient
-      colors={gradientColors}
-
-      start={{
-        x: 0,
-        y: 0,
-      }}
-
-      end={{
-        x: 1,
-        y: 1,
-      }}
-
-      style={styles.container}
-    >
-      <View style={styles.glowTopRight} pointerEvents="none" />
-
-      <View style={styles.glowBottomLeft} pointerEvents="none" />
-
-      <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          style={styles.safeArea}
-
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          overScrollMode="never"
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
+          <View style={styles.header}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              onPress={handleBack}
+              hitSlop={8}
+              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.authEntry.heading} />
+            </Pressable>
+            <Text accessibilityLabel="Jaci" style={styles.brandName}>
+              jaci<Text style={styles.brandPeriod}>.</Text>
+            </Text>
+          </View>
 
-            showsVerticalScrollIndicator={false}
+          <View style={styles.content}>
+            <Text accessibilityRole="header" style={styles.title}>
+              Que bom ter você por aqui.
+            </Text>
+            <Text style={styles.subtitle}>Entre para acessar sua conta Jaci.</Text>
 
-            keyboardShouldPersistTaps="handled"
-
-            bounces={false}
-
-            overScrollMode="never"
-
-            style={{
-              overscrollBehavior: 'none',
-            }}
-          >
-            {/* BOTÃO DE VOLTAR */}
-
-            <View style={styles.topNavigation}>
+            <View style={styles.profileContext}>
+              <View>
+                <Text style={styles.contextLabel}>Perfil de acesso</Text>
+                <Text style={[styles.contextValue, { color: perfilCores.authAccentDark }]}>
+                  {perfilNome}
+                </Text>
+              </View>
               <Pressable
-                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-
-                onPress={handleBack}
-
-                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Trocar perfil de acesso"
+                onPress={handleTrocarPerfil}
+                style={({ pressed }) => [styles.textAction, pressed && styles.pressed]}
               >
-                <Ionicons
-                  name="arrow-back"
-
-                  size={23}
-
-                  color="#FFFFFF"
-                />
+                <Text style={[styles.textActionLabel, { color: perfilCores.authAccentDark }]}>
+                  Trocar perfil
+                </Text>
               </Pressable>
             </View>
 
-            <View style={styles.mainWrapper}>
-              {/* CABEÇALHO */}
-
-              <View style={styles.headerGroup}>
-                <View style={styles.iconCircle}>
-                  <Ionicons
-                    name={headerIcon}
-
-                    size={34}
-
-                    color="#FFD000"
-                  />
-                </View>
-
-                <Text style={styles.titulo}>{titulo}</Text>
-
-                <Text style={styles.subtitulo}>{subtitulo}</Text>
-              </View>
-
-              {/* FORMULÁRIO */}
-
-              <View style={styles.formGroup}>
-                {/* CAMPO EMAIL */}
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>E-MAIL</Text>
-
-                  <View style={styles.inputWrapper}>
-                    <Ionicons
-                      name="mail-outline"
-
-                      size={20}
-
-                      color="rgba(255, 255, 255, 0.7)"
-
-                      style={styles.inputIcon}
-                    />
-
-                    <Controller
-                      control={control}
-
-                      name="email"
-
-                      render={({ field }) => (
-                        <TextInput
-                          style={styles.input}
-
-                          placeholder="seuemail@exemplo.com"
-
-                          placeholderTextColor="rgba(255, 255, 255, 0.4)"
-
-                          value={field.value}
-
-                          onChangeText={field.onChange}
-
-                          keyboardType="email-address"
-
-                          autoCapitalize="none"
-
-                          autoCorrect={false}
-                        />
-                      )}
-                    />
-                  </View>
-
-                  {errors.email?.message && (
-                    <Text style={styles.errorText}>{errors.email.message}</Text>
-                  )}
-                </View>
-
-                {/* CAMPO SENHA */}
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>SENHA</Text>
-
-                  <View style={styles.inputWrapper}>
-                    <Ionicons
-                      name="lock-closed-outline"
-
-                      size={20}
-
-                      color="rgba(255, 255, 255, 0.7)"
-
-                      style={styles.inputIcon}
-                    />
-
-                    <Controller
-                      control={control}
-
-                      name="password"
-
-                      render={({ field }) => (
-                        <TextInput
-                          style={styles.input}
-
-                          placeholder="••••••••"
-
-                          placeholderTextColor="rgba(255, 255, 255, 0.4)"
-
-                          value={field.value}
-
-                          onChangeText={field.onChange}
-
-                          secureTextEntry={!mostrarSenha}
-
-                          autoCapitalize="none"
-
-                          autoCorrect={false}
-                        />
-                      )}
-                    />
-
-                    <Pressable
-                      onPress={() => setMostrarSenha(!mostrarSenha)}
-
-                      style={styles.eyeIcon}
-
-                      hitSlop={8}
-                    >
-                      <Ionicons
-                        name={mostrarSenha ? 'eye-off-outline' : 'eye-outline'}
-
-                        size={20}
-
-                        color="rgba(255, 255, 255, 0.7)"
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Text nativeID="login-email-label" style={styles.label}>
+                  E-mail
+                </Text>
+                <View style={getInputWrapperStyle('email', Boolean(errors.email))}>
+                  <Controller
+                    control={control}
+                    name="email"
+                    render={({ field }) => (
+                      <TextInput
+                        accessibilityLabel="E-mail"
+                        accessibilityHint={errors.email?.message}
+                        nativeID="login-email"
+                        style={styles.input}
+                        placeholder="seuemail@exemplo.com"
+                        placeholderTextColor={colors.authEntry.placeholder}
+                        value={field.value}
+                        onChangeText={field.onChange}
+                        onFocus={() => setCampoFocado('email')}
+                        onBlur={() => {
+                          field.onBlur();
+                          setCampoFocado(null);
+                        }}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="email"
+                        textContentType="emailAddress"
+                        returnKeyType="next"
+                        onSubmitEditing={() => setFocus('password')}
                       />
-                    </Pressable>
-                  </View>
-
-                  {errors.password?.message && (
-                    <Text style={styles.errorText}>{errors.password.message}</Text>
-                  )}
-                </View>
-
-                <Pressable
-                  style={({ pressed }) => [styles.cadastroLink, pressed && styles.pressed]}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/(auth)/esqueci-senha',
-                      params: {
-                        perfil: isProtegida ? 'protegida' : 'guardiao',
-                      },
-                    })
-                  }
-                >
-                  <Text style={styles.cadastroBold}>Esqueci minha senha</Text>
-                </Pressable>
-              </View>
-
-              {/* BOTÃO ENTRAR */}
-
-              <View style={styles.footerGroup}>
-                <View style={styles.buttonContainer}>
-                  <AppButton
-                    title="Entrar"
-
-                    loading={loginMutation.isPending}
-
-                    onPress={handleSubmit(handleLogin)}
+                    )}
                   />
                 </View>
-
-                <Pressable
-                  style={({ pressed }) => [styles.cadastroLink, pressed && styles.pressed]}
-
-                  onPress={handleCadastro}
-                >
-                  <Text style={styles.cadastroText}>
-                    Não tem uma conta? <Text style={styles.cadastroBold}>Criar</Text>
+                {errors.email?.message ? (
+                  <Text accessibilityRole="alert" style={styles.errorText}>
+                    {errors.email.message}
                   </Text>
-                </Pressable>
+                ) : null}
               </View>
+
+              <View style={styles.inputContainer}>
+                <View style={styles.passwordLabelRow}>
+                  <Text nativeID="login-password-label" style={styles.label}>
+                    Senha
+                  </Text>
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel="Esqueci minha senha"
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(auth)/esqueci-senha',
+                        params: { perfil: perfilSelecionado },
+                      })
+                    }
+                    style={({ pressed }) => [styles.recoveryAction, pressed && styles.pressed]}
+                  >
+                    <Text style={[styles.textActionLabel, { color: perfilCores.authAccentDark }]}>
+                      Esqueci minha senha
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={getInputWrapperStyle('password', Boolean(errors.password))}>
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={({ field }) => (
+                      <TextInput
+                        accessibilityLabel="Senha"
+                        accessibilityHint={errors.password?.message}
+                        nativeID="login-password"
+                        style={styles.input}
+                        placeholder="Digite sua senha"
+                        placeholderTextColor={colors.authEntry.placeholder}
+                        value={field.value}
+                        onChangeText={field.onChange}
+                        secureTextEntry={!mostrarSenha}
+                        onFocus={() => setCampoFocado('password')}
+                        onBlur={() => {
+                          field.onBlur();
+                          setCampoFocado(null);
+                        }}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="current-password"
+                        textContentType="password"
+                        returnKeyType="done"
+                        onSubmitEditing={handleSubmit(handleLogin)}
+                      />
+                    )}
+                  />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                    accessibilityState={{ selected: mostrarSenha }}
+                    onPress={() => setMostrarSenha((value) => !value)}
+                    style={styles.eyeButton}
+                    hitSlop={4}
+                  >
+                    <Ionicons
+                      name={mostrarSenha ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color={colors.authEntry.body}
+                    />
+                  </Pressable>
+                </View>
+                {errors.password?.message ? (
+                  <Text accessibilityRole="alert" style={styles.errorText}>
+                    {errors.password.message}
+                  </Text>
+                ) : null}
+              </View>
+
+              <AppButton
+                title="Entrar"
+                loadingLabel="Entrando..."
+                loading={loginMutation.isPending}
+                fontFamily={fontFamilies.bodyBold}
+                colors={[perfilCores.authAccentDark, perfilCores.authAccentDark]}
+                textColor={colors.common.white}
+                onPress={handleSubmit(handleLogin)}
+              />
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </LinearGradient>
+
+            <View style={styles.signupPrompt}>
+              <Text style={styles.signupPromptText}>Ainda não tem conta?</Text>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Criar conta"
+                onPress={handleCadastro}
+                style={({ pressed }) => [styles.signupLinkButton, pressed && styles.pressed]}
+              >
+                <Text style={[styles.signupLink, { color: perfilCores.authAccentDark }]}>
+                  Criar conta
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

@@ -32,6 +32,7 @@ if (!(Test-Path server\.env)) { Copy-Item server\.env.example server\.env }
 ```
 
 Edite `server/.env`:
+
 - `DB_PASSWORD`: senha do MySQL que você vai criar
 - `JWT_SECRET`: gere com `node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"`
 
@@ -51,6 +52,7 @@ FLUSH PRIVILEGES;
 ```
 
 4. No `server/.env`, configure:
+
 ```
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -75,11 +77,13 @@ npm run db:setup
 ### 6. Executar o aplicativo
 
 **Terminal 1 - Servidor API:**
+
 ```powershell
 npm run server:dev
 ```
 
 **Terminal 2 - Aplicativo Web:**
+
 ```powershell
 npm run web
 ```

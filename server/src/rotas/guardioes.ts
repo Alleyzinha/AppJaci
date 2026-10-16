@@ -9,13 +9,15 @@ import {
   type Usuario,
 } from '../seguranca.js';
 
-const selecao = `SELECT CAST(idGuardiao AS CHAR) AS id, CAST(idUsuario AS CHAR) AS protectedUserId,
-  nome AS name, email, telefone AS phone, parentesco AS relation, observacao AS observation,
-  disponibilidade AS availability, cep, criadoEm AS createdAt FROM tbGuardiao`;
+const selecao = `SELECT CAST(g.idGuardiao AS CHAR) AS id, CAST(p.idUsuario AS CHAR) AS protectedUserId,
+  g.nome AS name, g.email, g.telefone AS phone, g.parentesco AS relation, g.observacao AS observation,
+  g.disponibilidade AS availability, g.cep, g.criadoEm AS createdAt FROM tbGuardiao g
+  JOIN tbVinculo v ON v.idGuardiao = g.idGuardiao AND v.status = 'Ativo'
+  JOIN tbProtegida p ON p.idProtegida = v.idProtegida`;
 
 export async function rotasGuardioes(app: FastifyInstance) {
   app.get('/api/guardians', { preHandler: apenasProtegida }, async (req) => ({
-    guardians: await consultar(`${selecao} WHERE idUsuario = ? ORDER BY criadoEm DESC`, [
+    guardians: await consultar(`${selecao} WHERE p.idUsuario = ? ORDER BY g.criadoEm DESC`, [
       req.usuario.idUsuario,
     ]),
   }));
@@ -54,15 +56,27 @@ export async function rotasGuardioes(app: FastifyInstance) {
         dados.cep ?? null,
       ],
     );
-    const [guardian] = await consultar(`${selecao} WHERE idGuardiao = ?`, [resultado.insertId]);
+    const [perfilProtegido] = await consultar<{ idProtegida: number }>(
+      'SELECT idProtegida FROM tbProtegida WHERE idUsuario = ?',
+      [req.usuario.idUsuario],
+    );
+    await executar(
+      "INSERT INTO tbVinculo (idProtegida, idGuardiao, status) VALUES (?, ?, 'Ativo')",
+      [perfilProtegido.idProtegida, resultado.insertId],
+    );
+    const [guardian] = await consultar(`${selecao} WHERE g.idGuardiao = ?`, [resultado.insertId]);
     return reply.code(201).send({ guardian });
   });
   app.get('/api/guardians/protected', { preHandler: autenticar }, async (req) => {
     if (req.usuario.perfil !== 'guardiao')
       throw new ErroHttp(403, 'Esta consulta é exclusiva de guardiões.');
     const usuarios = await consultar<Usuario>(
-      `SELECT u.* FROM tbUsuario u JOIN tbGuardiao g ON g.idUsuario = u.idUsuario WHERE g.idContaGuardiao = ? AND g.status = 'ativo' ORDER BY g.idGuardiao`,
-      [req.usuario.idUsuario],
+      `SELECT DISTINCT u.* FROM tbUsuario u
+      JOIN tbProtegida p ON p.idUsuario = u.idUsuario
+      JOIN tbVinculo v ON v.idProtegida = p.idProtegida AND v.status = 'Ativo'
+      JOIN tbGuardiao g ON g.idGuardiao = v.idGuardiao
+      WHERE (g.idContaGuardiao = ? OR LOWER(g.email) = LOWER(?)) AND g.status = 'ativo' ORDER BY u.idUsuario`,
+      [req.usuario.idUsuario, req.usuario.email],
     );
     return {
       protectedUser: usuarios[0] ? usuarioPublico(usuarios[0]) : null,
@@ -72,10 +86,11 @@ export async function rotasGuardioes(app: FastifyInstance) {
   app.delete('/api/guardians/:id', { preHandler: apenasProtegida }, async (req) => {
     const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
     const resultado = await executar(
-      'DELETE FROM tbGuardiao WHERE idGuardiao = ? AND idUsuario = ?',
+      'DELETE v FROM tbVinculo v JOIN tbProtegida p ON p.idProtegida = v.idProtegida WHERE v.idGuardiao = ? AND p.idUsuario = ?',
       [id, req.usuario.idUsuario],
     );
     if (!resultado.affectedRows) throw new ErroHttp(404, 'Guardião não encontrado.');
+    await executar('DELETE FROM tbGuardiao WHERE idGuardiao = ?', [id]);
     return { ok: true };
   });
 }

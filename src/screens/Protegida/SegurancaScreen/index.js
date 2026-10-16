@@ -117,7 +117,7 @@ export default function SegurancaScreen() {
         break;
 
       case 'ajustes':
-        router.push('/protegida/ajustes');
+        router.push('/protegida/configuracoes');
         break;
 
       default:
