@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       api_url:
-        description: URL pública ou acessível pelo celular da API (ex.: http://192.168.1.10:3000/api)
+        description: "URL da API acessível pelo celular (ex.: http://192.168.1.10:3000/api)"
         required: false
         type: string
   push:
