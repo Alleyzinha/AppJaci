@@ -10,6 +10,8 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useSegurancaStore } from '@/stores/seguranca.store';
 import { getFirstName } from '@/utils/name';
 import { useCoresTela } from '@/styles/useCoresTela';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/services/api/api';
 import { colors } from '@/styles/tokens';
 
 function useCoresIdentidade() {
@@ -33,14 +35,20 @@ export function CabecalhoJaci({
   onStatusPress,
   perfil = 'protegida',
 }) {
-  const nome = useAuthStore((estado) => estado.userName);
+  const nomeSessao = useAuthStore((estado) => estado.userName);
   const guardiao = perfil === 'guardiao';
   const camuflagem = useSegurancaStore((estado) => estado.camuflagem);
   const marca = camuflagem && !guardiao ? 'notas' : 'jaci';
   const tinta = '#FFFFFF';
   const destaque = '#FFFFFF';
   const fundoIcone = 'rgba(255,255,255,0.16)';
-  const inicial = getFirstName(nome || userName);
+  const conta = useQuery({
+    queryKey: ['minha-conta'],
+    queryFn: async () => (await api.get('/users/me')).data.user,
+    retry: false,
+  });
+  const inicial =
+    getFirstName(conta.data?.name) || getFirstName(nomeSessao) || getFirstName(userName);
   return (
     <LinearGradient
       colors={
@@ -71,7 +79,7 @@ export function CabecalhoJaci({
             <Text style={s.marcaPonto}>.</Text>
           </Text>
           <Text numberOfLines={1} style={[s.nome, { color: tinta }]}>
-            Olá, {inicial}
+            Olá{inicial ? `, ${inicial}` : ''}
           </Text>
         </View>
         {onStatusPress ? (

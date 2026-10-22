@@ -66,7 +66,7 @@ export const styles = StyleSheet.create({
   controles: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     marginTop: 24,
     gap: 8,
   },
@@ -74,16 +74,4 @@ export const styles = StyleSheet.create({
   alvoIndicador: { minWidth: 30, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   indicador: { width: 6, height: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.45)' },
   indicadorAtivo: { width: 26, backgroundColor: '#F8CEDB' },
-  setas: { flexDirection: 'row', gap: 8 },
-  seta: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressionado: { opacity: 0.65 },
 });

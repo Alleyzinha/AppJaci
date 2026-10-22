@@ -4,6 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/stores/auth.store';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/services/api/api';
 import { getFirstName } from '@/utils/name';
 import { colors } from '@/styles/tokens';
 import { styles } from './styles';
@@ -13,8 +15,14 @@ export default function GuardiaoHeader({
   showBackButton = false,
   onStatusPress,
 }) {
-  const nome = useAuthStore((estado) => estado.userName);
-  const primeiroNome = getFirstName(nome || userName);
+  const nomeSessao = useAuthStore((estado) => estado.userName);
+  const conta = useQuery({
+    queryKey: ['minha-conta'],
+    queryFn: async () => (await api.get('/users/me')).data.user,
+    retry: false,
+  });
+  const primeiroNome =
+    getFirstName(conta.data?.name) || getFirstName(nomeSessao) || getFirstName(userName);
   return (
     <LinearGradient
       colors={[colors.guardiao.primary, colors.guardiao.primaryDark]}
@@ -40,7 +48,7 @@ export default function GuardiaoHeader({
             jaci<Text style={styles.ponto}>.</Text>
           </Text>
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.nome}>
-            Olá, {primeiroNome}
+            Olá{primeiroNome ? `, ${primeiroNome}` : ''}
           </Text>
         </View>
         {onStatusPress && (

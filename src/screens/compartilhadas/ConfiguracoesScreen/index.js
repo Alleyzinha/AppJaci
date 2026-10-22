@@ -213,7 +213,7 @@ export default function ConfiguracoesScreen({ perfil = 'protegida' }) {
           onPress={async () => {
             try {
               await useAuthStore.getState().signOut();
-              router.replace('/(auth)/perfil');
+              router.replace('/(auth)');
             } catch {
               definirErroSaida('Não foi possível encerrar a sessão. Tente novamente.');
             }

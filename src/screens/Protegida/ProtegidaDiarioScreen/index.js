@@ -623,8 +623,12 @@ export default function ProtegidaDiarioScreen() {
           <Text style={[estilos.rotulo, { color: cores.texto }]}>Título</Text>
           <TextInput
             accessibilityLabel="Título da nota"
+            autoFocus
             value={rascunho.titulo}
             maxLength={200}
+            placeholder="Ex.: Como foi meu dia"
+            placeholderTextColor={cores.secundario}
+            returnKeyType="next"
             style={campo}
             onChangeText={(titulo) => definirRascunho({ ...rascunho, titulo })}
           />

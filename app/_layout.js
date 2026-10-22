@@ -13,6 +13,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { registrarPush } from '@/services/notificacoes/push';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
+import { Platform } from 'react-native';
 
 import '@/services/api/interceptors';
 
@@ -44,6 +45,8 @@ function NotificacoesGlobais() {
     if (token) void registrarPush();
   }, [token]);
   React.useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const abrir = (resposta) => {
       const tela = resposta.notification.request.content.data?.tela;
       if (tela === '/guardiao/sos' || tela === '/guardiao/checkin') router.push(tela);

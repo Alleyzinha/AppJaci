@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useCoresTela } from '@/styles/useCoresTela';
 import { mensagemErroApi } from '@/services/api/api';
 import { Botao } from '@/components/ui/TelaPadrao';
+import PortaoPin from '@/components/ui/PortaoPin';
 import {
   enviarAssistente,
   enviarMensagem,
@@ -60,17 +61,21 @@ export default function ChatScreen() {
   const [foco, definirFoco] = useState(false);
   const [estadoApp, definirEstadoApp] = useState(AppState.currentState);
   const [erroLeitura, definirErroLeitura] = useState('');
+  const [pinLiberado, definirPinLiberado] = useState(false);
   useFocusEffect(
     useCallback(() => {
       definirFoco(true);
-      return () => definirFoco(false);
+      return () => {
+        definirFoco(false);
+        definirPinLiberado(false);
+      };
     }, []),
   );
   useEffect(() => {
     const inscricao = AppState.addEventListener('change', definirEstadoApp);
     return () => inscricao.remove();
   }, []);
-  const ativo = foco && estadoApp === 'active';
+  const ativo = foco && estadoApp === 'active' && pinLiberado;
   const contatosQuery = useQuery({
     queryKey: ['chat-contatos', userId],
     queryFn: listarContatos,
@@ -167,10 +172,21 @@ export default function ChatScreen() {
   }
   const carregando = ia ? assistente.isPending : conversa.isPending && !!contato;
   const erro = envio.error || (ia ? assistente.error : conversa.error) || contatosQuery.error;
+  const erroConexao = contatosQuery.error || (ia ? assistente.error : conversa.error);
   const indisponivel = ia && !contatosQuery.data?.assistenteDisponivel;
   const podeEnviar = texto.trim().length > 0 && (ia ? consentimento && !indisponivel : !!contato);
+  function atualizar() {
+    contatosQuery.refetch();
+    if (ia) assistente.refetch();
+    else if (contato) conversa.refetch();
+  }
   return (
     <SafeAreaView style={[styles.tela, { backgroundColor: cores.fundo }]}>
+      <PortaoPin
+        liberado={pinLiberado}
+        onLiberar={() => definirPinLiberado(true)}
+        titulo="Digite seu PIN para abrir o chat"
+      />
       <KeyboardAvoidingView
         style={styles.tela}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -200,7 +216,7 @@ export default function ChatScreen() {
                 definirBuscar(!buscar);
                 definirBusca('');
               }}
-              style={styles.voltar}
+              style={[styles.voltar, { backgroundColor: cores.superficie }]}
             >
               <Ionicons name="search-outline" size={23} color={cores.destaque} />
             </Pressable>
@@ -209,7 +225,7 @@ export default function ChatScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Abrir orientações de acolhimento"
                 onPress={() => router.push('/protegida/acolhimento')}
-                style={styles.voltar}
+                style={[styles.voltar, { backgroundColor: cores.superficie }]}
               >
                 <Ionicons name="heart-outline" size={23} color={cores.destaque} />
               </Pressable>
@@ -221,7 +237,7 @@ export default function ChatScreen() {
               Em perigo imediato, ligue 190. Este chat não aciona serviços de emergência.
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 6, padding: 12 }}>
+          <View style={[styles.abas, { backgroundColor: cores.suave, borderColor: cores.borda }]}>
             {abas.map((item) => (
               <Pressable
                 key={item.id}
@@ -229,18 +245,26 @@ export default function ChatScreen() {
                 accessibilityState={{ selected: aba === item.id }}
                 onPress={() => trocarAba(item.id)}
                 style={[
-                  styles.contato,
+                  styles.aba,
                   {
                     flex: 1,
                     justifyContent: 'center',
-                    flexWrap: 'wrap',
-                    borderColor: aba === item.id ? cores.destaque : cores.borda,
-                    backgroundColor: aba === item.id ? cores.suave : cores.superficie,
+                    borderColor: aba === item.id ? cores.destaque : 'transparent',
+                    backgroundColor: aba === item.id ? cores.superficie : 'transparent',
                   },
                 ]}
               >
-                <Ionicons name={item.icone} size={18} color={cores.destaque} />
-                <Text style={[styles.nome, { color: cores.texto, fontSize: 12 }]}>
+                <Ionicons
+                  name={item.icone}
+                  size={18}
+                  color={aba === item.id ? cores.destaque : cores.secundario}
+                />
+                <Text
+                  style={[
+                    styles.nome,
+                    { color: aba === item.id ? cores.texto : cores.secundario, fontSize: 12 },
+                  ]}
+                >
                   {item.titulo}
                 </Text>
               </Pressable>
@@ -267,7 +291,7 @@ export default function ChatScreen() {
                     styles.contato,
                     {
                       borderColor: c.id === contato?.id ? cores.destaque : cores.borda,
-                      backgroundColor: cores.superficie,
+                      backgroundColor: c.id === contato?.id ? cores.suave : cores.superficie,
                     },
                   ]}
                 >
@@ -309,7 +333,8 @@ export default function ChatScreen() {
             <View style={[styles.aviso, { backgroundColor: cores.suave }]}>
               <Text style={[styles.avisoTexto, { color: cores.texto }]}>
                 Você conversa com uma IA. As mensagens desta conversa são enviadas à OpenAI para
-                gerar respostas; não substitui atendimento profissional.
+                gerar respostas; não substitui atendimento profissional. Evite enviar dados pessoais
+                ou informações sensíveis.
               </Text>
             </View>
           )}
@@ -348,64 +373,100 @@ export default function ChatScreen() {
                 ) : null
               }
               ListEmptyComponent={
-                <View style={styles.vazio}>
-                  <View
-                    style={[styles.avatar, { width: 68, height: 68, backgroundColor: cores.suave }]}
-                  >
-                    <Ionicons
-                      name={ia ? 'sparkles-outline' : 'chatbubbles-outline'}
-                      size={32}
-                      color={cores.destaque}
-                    />
+                erroConexao ? (
+                  <View style={styles.vazio}>
+                    <View
+                      style={[
+                        styles.avatar,
+                        { width: 68, height: 68, backgroundColor: cores.suave },
+                      ]}
+                    >
+                      <Ionicons name="cloud-offline-outline" size={32} color={cores.destaque} />
+                    </View>
+                    <Text style={[styles.vazioTitulo, { color: cores.texto }]}>
+                      Sem conexão com o chat
+                    </Text>
+                    <Text style={[styles.vazioTexto, { color: cores.secundario }]}>
+                      {mensagemErroApi(
+                        erroConexao,
+                        'Confira sua internet e tente carregar as conversas novamente.',
+                      )}
+                    </Text>
+                    <Botao titulo="Tentar novamente" onPress={atualizar} />
                   </View>
-                  <Text style={[styles.vazioTitulo, { color: cores.texto }]}>
-                    {busca
-                      ? 'Nenhuma mensagem encontrada'
-                      : indisponivel
-                        ? 'Assistente em preparação'
+                ) : (
+                  <View style={styles.vazio}>
+                    <View
+                      style={[
+                        styles.avatar,
+                        { width: 68, height: 68, backgroundColor: cores.suave },
+                      ]}
+                    >
+                      <Ionicons
+                        name={ia ? 'sparkles-outline' : 'chatbubbles-outline'}
+                        size={32}
+                        color={cores.destaque}
+                      />
+                    </View>
+                    <Text style={[styles.vazioTitulo, { color: cores.texto }]}>
+                      {busca
+                        ? 'Nenhuma mensagem encontrada'
+                        : indisponivel
+                          ? 'Assistente em preparação'
+                          : !ia && !contato
+                            ? aba === 'rede'
+                              ? 'Sua rede começa aqui'
+                              : 'Nenhum atendente disponível'
+                            : 'Vamos conversar?'}
+                    </Text>
+                    <Text style={[styles.vazioTexto, { color: cores.secundario }]}>
+                      {indisponivel
+                        ? 'A IA ainda não foi ativada. Enquanto isso, consulte o acolhimento ou converse com sua rede.'
                         : !ia && !contato
                           ? aba === 'rede'
-                            ? 'Sua rede começa aqui'
-                            : 'Nenhum atendente disponível'
-                          : 'Vamos conversar?'}
-                  </Text>
-                  <Text style={[styles.vazioTexto, { color: cores.secundario }]}>
-                    {indisponivel
-                      ? 'A IA ainda não foi ativada. Enquanto isso, consulte o acolhimento ou converse com sua rede.'
-                      : !ia && !contato
-                        ? aba === 'rede'
-                          ? perfil === 'protegida'
-                            ? 'Adicione um guardião confirmado para começar uma conversa.'
-                            : 'As protegidas vinculadas à sua conta aparecerão aqui.'
-                          : 'A equipe ainda não possui contas de atendimento configuradas.'
-                        : ia
-                          ? 'Tire dúvidas sobre o Jaci ou organize seus próximos passos.'
-                          : 'Envie sua primeira mensagem. A pessoa poderá responder quando abrir o chat.'}
-                  </Text>
-                  {!ia && !contato && aba === 'rede' && perfil === 'protegida' && (
-                    <Botao
-                      titulo="Gerenciar guardiões"
-                      onPress={() => router.push('/protegida/guardioes')}
-                    />
-                  )}
-                </View>
+                            ? perfil === 'protegida'
+                              ? 'Adicione um guardião confirmado para começar uma conversa.'
+                              : 'As protegidas vinculadas à sua conta aparecerão aqui.'
+                            : 'A equipe ainda não possui contas de atendimento configuradas.'
+                          : ia
+                            ? 'Tire dúvidas sobre o Jaci ou organize seus próximos passos.'
+                            : 'Envie sua primeira mensagem. A pessoa poderá responder quando abrir o chat.'}
+                    </Text>
+                    {!ia && !contato && aba === 'rede' && perfil === 'protegida' && (
+                      <Botao
+                        titulo="Gerenciar guardiões"
+                        onPress={() => router.push('/protegida/guardioes')}
+                      />
+                    )}
+                  </View>
+                )
               }
               renderItem={({ item }) => {
                 const minha = ia
                   ? item.papel === 'user'
                   : String(item.remetente) === String(userId);
+                const autor = minha ? 'Você' : ia ? 'Jaci' : contato?.nome || 'Contato';
                 return (
                   <View
+                    accessible
+                    accessibilityLabel={`${autor}, ${horario(item.criadaEm)}: ${item.texto}${minha && !ia ? (item.lidaEm ? ', lida' : ', enviada') : ''}`}
                     style={[
                       styles.bolha,
                       {
                         alignSelf: minha ? 'flex-end' : 'flex-start',
                         backgroundColor: minha ? cores.botao || '#CF2B9D' : cores.superficie,
-                        borderBottomRightRadius: minha ? 4 : 19,
+                        borderBottomRightRadius: minha ? 5 : 19,
                         borderBottomLeftRadius: minha ? 19 : 4,
+                        borderColor: minha ? 'transparent' : cores.borda,
+                        borderWidth: minha ? 0 : 1,
                       },
                     ]}
                   >
+                    <Text
+                      style={[styles.autorMensagem, { color: minha ? '#FFFFFF' : cores.destaque }]}
+                    >
+                      {autor}
+                    </Text>
                     <Text
                       selectable
                       style={[styles.texto, { color: minha ? '#FFFFFF' : cores.texto }]}
@@ -447,11 +508,8 @@ export default function ChatScreen() {
                 </Text>
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => {
-                    contatosQuery.refetch();
-                    if (ia) assistente.refetch();
-                    else if (contato) conversa.refetch();
-                  }}
+                  accessibilityLabel="Tentar atualizar conversas"
+                  onPress={atualizar}
                 >
                   <Text style={[styles.subtitulo, { color: cores.destaque }]}>
                     Tentar atualizar novamente

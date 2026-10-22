@@ -132,24 +132,6 @@ export default function CarrosselAcolhimento({ compacto = false }) {
                 </Pressable>
               ))}
             </View>
-            <View style={styles.setas}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Foto anterior"
-                onPress={() => navegar(-1)}
-                style={({ pressed }) => [styles.seta, pressed && styles.pressionado]}
-              >
-                <Ionicons name="arrow-back" size={19} color="#FFFFFF" />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Próxima foto"
-                onPress={() => navegar(1)}
-                style={({ pressed }) => [styles.seta, pressed && styles.pressionado]}
-              >
-                <Ionicons name="arrow-forward" size={19} color="#FFFFFF" />
-              </Pressable>
-            </View>
           </View>
         </View>
       </View>

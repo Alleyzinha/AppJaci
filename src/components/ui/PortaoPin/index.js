@@ -10,7 +10,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const PIN_TAMANHO = 4;
 
 /** Valida o PIN da conta antes de abrir o Diário Seguro. */
-export default function PortaoPin({ liberado, onLiberar }) {
+export default function PortaoPin({
+  liberado,
+  onLiberar,
+  titulo = 'Digite seu PIN para abrir o Diário',
+}) {
   const cores = useCoresTela();
   const [digits, definirDigits] = useState([]);
   const [erro, definirErro] = useState('');
@@ -72,7 +76,7 @@ export default function PortaoPin({ liberado, onLiberar }) {
             <Ionicons name="lock-closed-outline" size={26} color={cores.destaque} />
           </View>
           <Text style={[styles.titulo, { color: cores.texto }]}>
-            {carregando ? 'Aguarde…' : 'Digite seu PIN para abrir o Diário'}
+            {carregando ? 'Aguarde…' : titulo}
           </Text>
           <View style={styles.circulos}>
             {Array.from({ length: PIN_TAMANHO }).map((_, i) => (
